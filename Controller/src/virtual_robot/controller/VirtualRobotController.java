@@ -45,7 +45,7 @@ public class VirtualRobotController {
     //Virtual Hardware
     private HardwareMap hardwareMap = null;
     private VirtualBot bot = null;
-    GamePad gamePad = new GamePad();
+    Gamepad gamePad = new Gamepad();
 
     //Background Image and Field
     private Image backgroundImage = Background.background;
@@ -384,9 +384,9 @@ public class VirtualRobotController {
      * Base class for LinearOpMode.
      */
     public class LinearOpModeBase {
-        protected final HardwareMap hardwareMap;
-        protected final GamePad gamepad1;
-        protected final Telemetry telemetry;
+        public final HardwareMap hardwareMap;
+        public final Gamepad gamepad1;
+        public final Telemetry telemetry;
 
         public LinearOpModeBase(){
             hardwareMap = VirtualRobotController.this.hardwareMap;

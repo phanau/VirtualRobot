@@ -4,11 +4,12 @@ import com.studiohartman.jamepad.ControllerManager;
 import com.studiohartman.jamepad.ControllerState;
 
 /**
- * Represents the GamePad.
+ * Represents the Gamepad.
  *
  * Note: the fields in the class are all public, but they should not be changed from the OpMode code.
+ * Note: in the original code from Git this was spelled "GamePad" but that's not what the real FTC code is so I've changed it.
  */
-public class GamePad {
+public class Gamepad {
 
     public volatile boolean x = false;
     public volatile boolean y = false;
@@ -34,7 +35,7 @@ public class GamePad {
 
     private ControllerManager controllers = new ControllerManager();
 
-    public GamePad(){
+    public Gamepad(){
         controllers.initSDLGamepad();
         update();
     }
@@ -69,3 +70,4 @@ public class GamePad {
     }
 
 }
+

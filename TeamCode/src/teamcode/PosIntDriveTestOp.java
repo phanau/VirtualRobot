@@ -81,6 +81,7 @@ public class PosIntDriveTestOp extends OpMode {
 
             // update accumulated field position
             double dist = (encoderDist * mWheelDiam * Math.PI)/mCountsPerRev;
+            dist *= 0.5;        // correction hack .... make our notion of distance per click match simulator's (where is the error???)
             this.move(dist, imuBearingDeg);
 
             if (mOpMode != null)
@@ -274,7 +275,7 @@ public class PosIntDriveTestOp extends OpMode {
                 new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, false));
 
         // turn to heading zero to finish up
-        mSequence.add(new AutoLib.AzimuthTolerancedTurnStep(this, 0, mGyro, mPid, mMotors, turnPower, tol, timeout));
+        mSequence.add(new AutoLib.AzimuthTolerancedTurnStep(this, 0, mGyro, mPid, mMotors, turnPower, tol, 10));
         mSequence.add(new AutoLib.MoveByTimeStep(mMotors, 0, 0, true));     // stop all motors
 
         // start out not-done

@@ -39,15 +39,15 @@ public class PosIntDriveTestOp extends OpMode {
     class EncoderGyroPosInt extends SensorLib.PositionIntegrator {
         OpMode mOpMode;
         HeadingSensor mGyro;
-        DcMotor mEncoderMotor;
+        DcMotor[] mEncoderMotor;
 
-        int mEncoderPrev;		// previous reading of motor encoder
+        int mEncoderPrev[];		// previous reading of motor encoder
         boolean mFirstLoop;
 
         int mCountsPerRev;
         double mWheelDiam;
 
-        public EncoderGyroPosInt(OpMode opmode, HeadingSensor gyro, DcMotor encoderMotor, int countsPerRev, double wheelDiam, Position initialPosn)
+        public EncoderGyroPosInt(OpMode opmode, HeadingSensor gyro, DcMotor[] encoderMotor, int countsPerRev, double wheelDiam, Position initialPosn)
         {
             super(initialPosn);
             mOpMode = opmode;
@@ -56,19 +56,25 @@ public class PosIntDriveTestOp extends OpMode {
             mFirstLoop = true;
             mCountsPerRev = countsPerRev;
             mWheelDiam = wheelDiam;
+            mEncoderPrev = new int[encoderMotor.length];
         }
 
         public boolean loop() {
             // get initial encoder value
             if (mFirstLoop) {
-                mEncoderPrev = mEncoderMotor.getCurrentPosition();
+                for (int i=0; i<mEncoderMotor.length; i++)
+                    mEncoderPrev[i] = mEncoderMotor[i].getCurrentPosition();
                 mFirstLoop = false;
             }
 
-            // get current encoder value and compute delta since last read
-            int encoder = mEncoderMotor.getCurrentPosition();
-            int encoderDist = encoder - mEncoderPrev;
-            mEncoderPrev = encoder;
+            // get current encoder values and compute average delta since last read
+            int encoderDist = 0;
+            for (int i=0; i<mEncoderMotor.length; i++) {
+                int encoder = mEncoderMotor[i].getCurrentPosition();
+                encoderDist += encoder - mEncoderPrev[i];
+                mEncoderPrev[i] = mEncoderMotor[i].getCurrentPosition();
+            }
+            encoderDist /= mEncoderMotor.length;
 
             // get bearing from IMU gyro
             double imuBearingDeg = mGyro.getHeading();
@@ -78,7 +84,7 @@ public class PosIntDriveTestOp extends OpMode {
             this.move(dist, imuBearingDeg);
 
             if (mOpMode != null)
-                mOpMode.telemetry.addData("EncoderGyroPosInt position", String.format("%.2f", this.getX())+", " + String.format("%.2f", this.getY()));
+                mOpMode.telemetry.addData("EGPI position", String.format("%.2f", this.getX())+", " + String.format("%.2f", this.getY()));
 
             return true;
         }
@@ -109,9 +115,9 @@ public class PosIntDriveTestOp extends OpMode {
             Position current = mPosInt.getPosition();
             double dist = Math.sqrt((mTarget.x-current.x)*(mTarget.x-current.x) + (mTarget.y-current.y)*(mTarget.y-current.y));
             if (mOpMode != null) {
-                mOpMode.telemetry.addData("PositionTerminatorStep target", String.format("%.2f", mTarget.x) + ", " + String.format("%.2f", mTarget.y));
-                mOpMode.telemetry.addData("PositionTerminatorStep current", String.format("%.2f", current.x) + ", " + String.format("%.2f", current.y));
-                mOpMode.telemetry.addData("PositionTerminatorStep dist", String.format("%.2f", dist));
+                mOpMode.telemetry.addData("PTS target", String.format("%.2f", mTarget.x) + ", " + String.format("%.2f", mTarget.y));
+                mOpMode.telemetry.addData("PTS current", String.format("%.2f", current.x) + ", " + String.format("%.2f", current.y));
+                mOpMode.telemetry.addData("PTS dist", String.format("%.2f", dist));
             }
             boolean bDone = (dist < mTol);
             return bDone;
@@ -149,9 +155,9 @@ public class PosIntDriveTestOp extends OpMode {
             double headingXrad = Math.atan2((target.y - current.y), (target.x - current.x));        // pos CCW from X-axis
             double headingYdeg = SensorLib.Utils.wrapAngle(Math.toDegrees(headingXrad) - 90.0);     // pos CCW from Y-axis
             if (mOpMode != null) {
-                mOpMode.telemetry.addData("GyroPosIntGuideStep.HeadingToTarget target", String.format("%.2f", target.x) + ", " + String.format("%.2f", target.y));
-                mOpMode.telemetry.addData("GyroPosIntGuideStep.HeadingToTarget current", String.format("%.2f", current.x) + ", " + String.format("%.2f", current.y));
-                mOpMode.telemetry.addData("GyroPosIntGuideStep.HeadingToTarget heading", String.format("%.2f", headingYdeg));
+                mOpMode.telemetry.addData("GPIGS.HTT target", String.format("%.2f", target.x) + ", " + String.format("%.2f", target.y));
+                mOpMode.telemetry.addData("GPIGS.HTT current", String.format("%.2f", current.x) + ", " + String.format("%.2f", current.y));
+                mOpMode.telemetry.addData("GPIGS.HTT heading", String.format("%.2f", headingYdeg));
             }
             return headingYdeg;
         }
@@ -233,7 +239,7 @@ public class PosIntDriveTestOp extends OpMode {
         double wheelDiam = 4.0;		    // wheel diameter (in)
         Position initialPosn = new Position(DistanceUnit.INCH, 0.0, 0.0, 0.0, 0);
         // example starting position: at origin of field
-        mPosInt = new EncoderGyroPosInt(this, mGyro, mMotors[1], countsPerRev, wheelDiam, initialPosn);
+        mPosInt = new EncoderGyroPosInt(this, mGyro, mMotors, countsPerRev, wheelDiam, initialPosn);
 
 
         // create an autonomous sequence with the steps to drive

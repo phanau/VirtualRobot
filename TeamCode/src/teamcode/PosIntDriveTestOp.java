@@ -214,14 +214,21 @@ public class PosIntDriveTestOp extends OpMode {
         // assumed order is fr, br, fl, bl
         mMotors = new DcMotor[4];
         mMotors[0] = mf.getDcMotor("front_right_motor");
-        mMotors[1] = mf.getDcMotor("back_right_motor");
-        (mMotors[2] = mf.getDcMotor("front_left_motor")).setDirection(DcMotor.Direction.REVERSE);
-        (mMotors[3] = mf.getDcMotor("back_left_motor")).setDirection(DcMotor.Direction.REVERSE);
+        if (mMotors[0] != null) {
+            mMotors[1] = mf.getDcMotor("back_right_motor");
+            (mMotors[2] = mf.getDcMotor("front_left_motor")).setDirection(DcMotor.Direction.REVERSE);
+            (mMotors[3] = mf.getDcMotor("back_left_motor")).setDirection(DcMotor.Direction.REVERSE);
+        }
+        else {  // assume we're using the 2-wheel bot simulation
+            mMotors[0] = mMotors[1] = mf.getDcMotor("right_motor");
+            (mMotors[2] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
+            (mMotors[3] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
+        }
 
         // get hardware IMU and wrap gyro in HeadingSensor object usable below
         mGyro = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
         mGyro.init(7);  // orientation of REV hub in my ratbot
-        mGyro.setDegreesPerTurn(355.0f);     // appears that's what my IMU does ...
+        //mGyro.setDegreesPerTurn(355.0f);     // appears that's what my IMU does ...
         mGyro.setHeadingOffset(0.0f);        // example: facing due north along field Y-axis (positive CCW)
 
         // create a PID controller for the sequence
@@ -245,14 +252,14 @@ public class PosIntDriveTestOp extends OpMode {
 
         // create an autonomous sequence with the steps to drive
         // several legs of a polygonal course ---
-        float movePower = 0.20f;
-        float turnPower = 0.25f;
+        float movePower = 0.50f;
+        float turnPower = 0.50f;
 
         // create the root Sequence for this autonomous OpMode
         mSequence = new AutoLib.LinearSequence();
 
         // add a bunch of timed "legs" to the sequence - use Gyro heading convention of positive degrees CW from initial heading
-        float tol = 3.0f;   // tolerance in inches
+        float tol = 1.0f;   // tolerance in inches
         float timeout = 2.0f;   // seconds
 
         // add a bunch of position integrator "legs" to the sequence -- uses absolute field coordinate system in inches
@@ -263,6 +270,8 @@ public class PosIntDriveTestOp extends OpMode {
         mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,                   // do this move backwards!
                 new Position(DistanceUnit.INCH, 36, 0, 0., 0), tol, false));
         mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, -48, -48, 0., 0), tol, false));
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, false));
 
         mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,
@@ -271,6 +280,8 @@ public class PosIntDriveTestOp extends OpMode {
                 new Position(DistanceUnit.INCH, 36, 36, 0., 0), tol, false));
         mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, -movePower, mPid,                   // do this move backwards!
                 new Position(DistanceUnit.INCH, 36, 0, 0., 0), tol, false));
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, -movePower, mPid,                   // do this move backwards!
+                new Position(DistanceUnit.INCH, -48, -48, 0., 0), tol, false));
         mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, false));
 

@@ -1,6 +1,7 @@
 package teamcode;
 
 import virtual_robot.controller.OpMode;
+import virtual_robot.controller.XDriveBot;
 import virtual_robot.hardware.ColorSensor;
 import virtual_robot.hardware.DcMotor;
 import virtual_robot.hardware.DistanceSensor;
@@ -81,6 +82,9 @@ public class PosIntDriveTestOp extends OpMode {
 
             // update accumulated field position
             double dist = (encoderDist * mWheelDiam * Math.PI)/mCountsPerRev;
+            boolean isXdrive = (mOpMode.virtualBot.getClass() == XDriveBot.class);  // handle X-drive too ...
+            if (isXdrive)
+                dist *= Math.sqrt(2);   // each wheel rotation moves the bot further with X-drive
             dist *= 0.5;        // correction hack .... make our notion of distance per click match simulator's (where is the error???)
             this.move(dist, imuBearingDeg);
 

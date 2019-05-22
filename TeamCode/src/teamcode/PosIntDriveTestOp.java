@@ -85,7 +85,6 @@ public class PosIntDriveTestOp extends OpMode {
             boolean isXdrive = (mOpMode.virtualBot.getClass() == XDriveBot.class);  // handle X-drive too ...
             if (isXdrive)
                 dist *= Math.sqrt(2);   // each wheel rotation moves the bot further with X-drive
-            dist *= 0.5;        // correction hack .... make our notion of distance per click match simulator's (where is the error???)
             this.move(dist, imuBearingDeg);
 
             if (mOpMode != null) {
@@ -250,7 +249,7 @@ public class PosIntDriveTestOp extends OpMode {
         mPidAdjuster = new SensorLib.PIDAdjuster(this, mPid, gamepad1);
 
         // create Encoder/gyro-based PositionIntegrator to keep track of where we are on the field
-        int countsPerRev = 28*20;		// for 20:1 gearbox motor @ 28 counts/motorRev
+        int countsPerRev = 28*40;		// for 40:1 gearbox motor @ 28 counts/motorRev
         double wheelDiam = 4.0;		    // wheel diameter (in)
         Position initialPosn = new Position(DistanceUnit.INCH, 0.0, 0.0, 0.0, 0);
         // example starting position: at origin of field

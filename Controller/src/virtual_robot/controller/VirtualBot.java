@@ -9,6 +9,8 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import virtual_robot.hardware.HardwareMap;
+import virtual_robot.util.navigation.DistanceUnit;
+import virtual_robot.util.navigation.Position;
 
 public abstract class VirtualBot {
 
@@ -67,6 +69,8 @@ public abstract class VirtualBot {
     public abstract void powerDownAndReset();
 
     public double getHeadingRadians(){ return headingRadians; }
+
+    public Position getPosition() { return new Position(DistanceUnit.INCH, x*72/halfFieldWidth, y*72/halfFieldWidth, 0.0, System.nanoTime()); }
 
     public void positionWithMouseClick(MouseEvent arg){
 

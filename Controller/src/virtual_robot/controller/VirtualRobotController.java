@@ -387,9 +387,12 @@ public class VirtualRobotController {
         public final HardwareMap hardwareMap;
         public final Gamepad gamepad1;
         public final Telemetry telemetry;
+        public final VirtualBot virtualBot;
 
         public LinearOpModeBase(){
             hardwareMap = VirtualRobotController.this.hardwareMap;
+            virtualBot = VirtualRobotController.this.bot;
+                // expose this so opmodes can get "actuals" like true position to compare with what they think is true ...
             gamepad1 = gamePad;
             telemetry = new TelemetryImpl();
         }

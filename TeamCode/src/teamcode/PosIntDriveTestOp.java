@@ -84,8 +84,11 @@ public class PosIntDriveTestOp extends OpMode {
             dist *= 0.5;        // correction hack .... make our notion of distance per click match simulator's (where is the error???)
             this.move(dist, imuBearingDeg);
 
-            if (mOpMode != null)
-                mOpMode.telemetry.addData("EGPI position", String.format("%.2f", this.getX())+", " + String.format("%.2f", this.getY()));
+            if (mOpMode != null) {
+                mOpMode.telemetry.addData("EGPI position", String.format("%.2f", this.getX()) + ", " + String.format("%.2f", this.getY()));
+                Position simPos = mOpMode.virtualBot.getPosition();     // get the "actual" position from the VirtualBot to see how well our PosInt is tracking ...
+                mOpMode.telemetry.addData("Vbot position", String.format("%.2f", simPos.x) + ", " + String.format("%.2f", simPos.y));
+            }
 
             return true;
         }

@@ -107,8 +107,10 @@ public class MechBotAutoDemo extends LinearOpMode {
                 Color.RGBtoHSV(colorSensor.red(), colorSensor.green(), colorSensor.blue(), hsv);
                 if (hsv[1] > 0.25) et.reset();
                 setPower( 2.0f * (hsv[1] - 0.5f), 0.5f, 0);
-                String s = String.format("%5.2f", hsv[0])+", "+String.format("%.2f", hsv[1])+", "+String.format("%.2f", hsv[2]);
-                telemetry.addData("Color sensor HSV:", s);
+                String s1 = String.format("%d", colorSensor.red())+", "+String.format("%d", colorSensor.green())+", "+String.format("%d", colorSensor.blue());
+                telemetry.addData("Color sensor RGB:", s1);
+                String s2 = String.format("%.2f", hsv[0])+", "+String.format("%.2f", hsv[1])+", "+String.format("%.2f", hsv[2]);
+                telemetry.addData("Color sensor HSV:", s2);
                 telemetry.update();
             }
 

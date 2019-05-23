@@ -37,6 +37,7 @@ public class VirtualRobotController {
     @FXML ImageView imgViewBackground;
     @FXML private ComboBox<String> cbxConfig;
     @FXML private Button driverButton;
+    @FXML private Button debugButton;
     @FXML private ComboBox<String> cbxOpModes;
     @FXML private Slider sldRandomMotorError;
     @FXML private Slider sldSystematicMotorError;
@@ -81,6 +82,9 @@ public class VirtualRobotController {
         }
     };
 
+    //Debug controls
+    private boolean bSuspend = false;        // debug flag
+
     public void initialize() {
         LinearOpMode.setVirtualRobotController(this);
         cbxOpModes.setItems(OpModes.opModes);
@@ -122,6 +126,12 @@ public class VirtualRobotController {
     public StackPane getFieldPane(){ return fieldPane; }
 
     @FXML
+    private void handleDebugButtonAction(ActionEvent event) {
+        bSuspend = !bSuspend;
+        debugButton.setText(bSuspend ? "RESUME" : "PAUSE");
+    }
+
+    @FXML
     private void handleDriverButtonAction(ActionEvent event){
         if (!opModeInitialized){
             if (!initLinearOpMode()) return;
@@ -132,7 +142,7 @@ public class VirtualRobotController {
             Runnable runOpMode = new Runnable() {
                 @Override
                 public void run() {
-                    runOpModeAndCleanUp();
+                    runOpModeAndCleanUp(bSuspend);
                 }
             };
             opModeThread = new Thread(runOpMode);
@@ -140,16 +150,20 @@ public class VirtualRobotController {
             final Runnable updateDisplay = new Runnable() {
                 @Override
                 public void run() {
-                    bot.updateDisplay();
-                    updateTelemetryDisplay();
+                    if (!bSuspend) {
+                        bot.updateDisplay();
+                        updateTelemetryDisplay();
+                    }
                 }
             };
             Runnable singleCycle = new Runnable() {
                 @Override
                 public void run() {
-                    gamePad.update();
-                    bot.updateStateAndSensors(TIMER_INTERVAL_MILLISECONDS);
-                    Platform.runLater(updateDisplay);
+                    if (!bSuspend) {
+                        gamePad.update();
+                        bot.updateStateAndSensors(TIMER_INTERVAL_MILLISECONDS);
+                        Platform.runLater(updateDisplay);
+                    }
                 }
             };
             executorService = Executors.newSingleThreadScheduledExecutor();
@@ -178,8 +192,8 @@ public class VirtualRobotController {
         }
     }
 
-    private void runOpModeAndCleanUp(){
-        opMode.runOpMode();
+    private void runOpModeAndCleanUp(boolean bSuspend){
+        opMode.runOpMode(bSuspend);
         bot.powerDownAndReset();
         if (!executorService.isShutdown()) executorService.shutdown();
         opModeInitialized = false;

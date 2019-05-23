@@ -30,6 +30,28 @@ public class OpMode extends LinearOpMode {
         stop();
     }
 
+    public void runOpMode(boolean bSuspend)
+    {
+        init();
+        telemetry.update();
+        waitForStart();
+        while (opModeIsActive()) {
+            if (bSuspend) {
+                try{
+                    Thread.sleep(0);
+                } catch (InterruptedException exc){
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+            else {
+                loop();
+                telemetry.update();
+            }
+        }
+        stop();
+    }
+
     /**
      * Get the number of seconds this op mode has been running
      * <p>

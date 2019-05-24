@@ -50,6 +50,8 @@ public class MechBotDemo extends LinearOpMode {
 
         ColorSensor colorSensor = hardwareMap.colorSensor.get("color_sensor");
         telemetry.addData("Press Start When Ready","");
+        telemetry.addData("left stick -- move 4 ways","");
+        telemetry.addData("right stick X -- rotate","");
         telemetry.update();
         waitForStart();
         while (opModeIsActive()){

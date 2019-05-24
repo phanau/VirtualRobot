@@ -207,11 +207,9 @@ public class PosIntDriveTestOp extends OpMode {
 
     @Override
     public void init() {
-        bSetup = false;      // start out in Kp/Ki setup mode
         AutoLib.HardwareFactory mf = new AutoLib.RealHardwareFactory(this);
 
-        // get the motors: depending on the factory we created above, these may be
-        // either dummy motors that just log data or real ones that drive the hardware
+        // get the motors:
         // assumed order is fr, br, fl, bl
         mMotors = new DcMotor[4];
         mMotors[0] = mf.getDcMotor("front_right_motor");

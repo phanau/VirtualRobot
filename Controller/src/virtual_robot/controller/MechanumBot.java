@@ -54,7 +54,7 @@ public class MechanumBot extends VirtualBot {
         backServoArm.getTransforms().add(new Rotate(0, 37.5, 67.5));
 
         tWR = new double[][] {
-                {-0.25, 0.25, -0.25, 0.25},
+                {-0.25, 0.25, 0.25,-0.25},      // seems like they had Meccanum wheels mounted backwards ???
                 {0.25, 0.25, 0.25, 0.25},
                 {-0.25/ wlAverage, -0.25/ wlAverage, 0.25/ wlAverage, 0.25/ wlAverage},
                 {-0.25, 0.25, 0.25, -0.25}

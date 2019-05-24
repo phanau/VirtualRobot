@@ -29,21 +29,21 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-package org.firstinspires.ftc.teamcode._TeleOp;
+package teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.Range;
-
-import org.firstinspires.ftc.teamcode._Libs.AutoLib;
+import virtual_robot.controller.OpMode;
+import virtual_robot.hardware.DcMotor;
+import virtual_robot.hardware.bno055.BNO055IMU;
+import virtual_robot.util._Libs.BNO055IMUHeadingSensor;
+import virtual_robot.util._Libs.AutoLib;
+import virtual_robot.util._Libs.Range;
 
 /**
  * TeleOp Mode
  * <p>
  * Enables control of the robot via the gamepad using Squirrely Wheels
  */
-@TeleOp(name="SquirrelyDrive1", group="Test")  // @Autonomous(...) is the other common choice
+//@TeleOp(name="SquirrelyDrive1", group="Test")  // @Autonomous(...) is the other common choice
 //@Disabled
 public class SquirrelyDrive1 extends OpMode {
 
@@ -82,10 +82,10 @@ public class SquirrelyDrive1 extends OpMode {
 		 *   "fr" and "br" are front and back right wheels
 		 */
 		try {
-			motorFrontRight = hardwareMap.dcMotor.get("fr");
-			motorFrontLeft = hardwareMap.dcMotor.get("fl");
-			motorBackRight = hardwareMap.dcMotor.get("br");
-			motorBackLeft = hardwareMap.dcMotor.get("bl");
+			motorFrontRight = hardwareMap.dcMotor.get("front_right_motor");
+			motorFrontLeft = hardwareMap.dcMotor.get("front_left_motor");
+			motorBackRight = hardwareMap.dcMotor.get("back_right_motor");
+			motorBackLeft = hardwareMap.dcMotor.get("back_left_motor");
 			motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
 			motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
 		}

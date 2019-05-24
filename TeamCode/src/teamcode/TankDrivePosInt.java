@@ -31,16 +31,15 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-package org.firstinspires.ftc.teamcode._TeleOp;
+package teamcode;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.Range;
-
-import org.firstinspires.ftc.teamcode._Libs.BNO055IMUHeadingSensor;
-import org.firstinspires.ftc.teamcode._Libs.SensorLib;
+import virtual_robot.controller.OpMode;
+import virtual_robot.hardware.DcMotor;
+import virtual_robot.util._Libs.AutoLib;
+import virtual_robot.util._Libs.Range;
+import virtual_robot.hardware.bno055.BNO055IMU;
+import virtual_robot.util._Libs.BNO055IMUHeadingSensor;
+import virtual_robot.util._Libs.SensorLib;
 
 /**
  * TeleOp Mode
@@ -49,23 +48,20 @@ import org.firstinspires.ftc.teamcode._Libs.SensorLib;
  * Uses position integration to estimate where we are on the field
  */
 
-@TeleOp(name="TankDrive PosInt Encoder", group="Test")  // @Autonomous(...) is the other common choice
+//@TeleOp(name="TankDrive PosInt Encoder", group="Test")  // @Autonomous(...) is the other common choice
 //@Disabled
 public class TankDrivePosInt extends OpMode {
 
-	DcMotor motorFrontRight;
-	DcMotor motorFrontLeft;
-	DcMotor motorBackRight;
-	DcMotor motorBackLeft;
+	DcMotor mMotors[];
 
 	SensorLib.PositionIntegrator mPosInt;	// position integrator
 	BNO055IMUHeadingSensor mGyro;           // gyro to use for heading information
-	int mEncoderPrev;						// previous reading of motor encoder
+
+	DcMotor[] mEncoderMotor;
+	int mEncoderPrev[];		// previous reading of motor encoder
 
 	boolean bDebug = false;
 	boolean bFirstLoop = true;
-
-	DcMotor mEncoderMotor;					// the motor we'll use for encoder input
 
 	/**
 	 * Constructor
@@ -87,19 +83,22 @@ public class TankDrivePosInt extends OpMode {
 		 * configured your robot and created the configuration file.
 		 */
 		
-		/*
-		 * For this test, we assume the following,
-		 *   There are four motors
-		 *   "fl" and "bl" are front and back left wheels
-		 *   "fr" and "br" are front and back right wheels
-		 */
 		try {
-			motorFrontRight = hardwareMap.dcMotor.get("fr");
-			motorFrontLeft = hardwareMap.dcMotor.get("fl");
-			motorBackRight = hardwareMap.dcMotor.get("br");
-			motorBackLeft = hardwareMap.dcMotor.get("bl");
-			motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
-			motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
+			// get the motors:
+			// assumed order is fr, br, fl, bl
+			AutoLib.HardwareFactory mf = new AutoLib.RealHardwareFactory(this);
+			mMotors = new DcMotor[4];
+			mMotors[0] = mf.getDcMotor("front_right_motor");
+			if (mMotors[0] != null) {
+				mMotors[1] = mf.getDcMotor("back_right_motor");
+				(mMotors[2] = mf.getDcMotor("front_left_motor")).setDirection(DcMotor.Direction.REVERSE);
+				(mMotors[3] = mf.getDcMotor("back_left_motor")).setDirection(DcMotor.Direction.REVERSE);
+			}
+			else {  // assume we're using the 2-wheel bot simulation
+				mMotors[0] = mMotors[1] = mf.getDcMotor("right_motor");
+				(mMotors[2] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
+				(mMotors[3] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
+			}
 		}
 		catch (IllegalArgumentException iax) {
 			bDebug = true;
@@ -114,7 +113,8 @@ public class TankDrivePosInt extends OpMode {
 		mGyro.setDegreesPerTurn(355.0f);     // appears that's what my IMU does ...
 
 		bFirstLoop = true;
-		mEncoderMotor = motorBackRight;
+		mEncoderMotor = mMotors;
+		mEncoderPrev = new int[4];
 	}
 
 	/*
@@ -127,7 +127,8 @@ public class TankDrivePosInt extends OpMode {
 
 		// get initial encoder value
 		if (bFirstLoop) {
-			mEncoderPrev = mEncoderMotor.getCurrentPosition();
+			for (int i=0; i<mEncoderMotor.length; i++)
+				mEncoderPrev[i] = mEncoderMotor[i].getCurrentPosition();
 			bFirstLoop = false;
 		}
 
@@ -142,28 +143,32 @@ public class TankDrivePosInt extends OpMode {
 
 		// scale the joystick value to make it easier to control
 		// the robot more precisely at slower speeds.
-		final float scale = 0.3f;
+		final float scale = 0.75f;
 		left =  (float)scaleInput(left) * scale;
 		right = (float)scaleInput(right) * scale;
 
 		// write the values to the motors - for now, front and back motors on each side are set the same
 		if (!bDebug) {
-			motorFrontRight.setPower(right);
-			motorBackRight.setPower(right);
-			motorFrontLeft.setPower(left);
-			motorBackLeft.setPower(left);
+			mMotors[0].setPower(right);
+			mMotors[1].setPower(right);
+			mMotors[2].setPower(left);
+			mMotors[3].setPower(left);
 		}
 
-		// get current encoder value and compute delta since last read
-		int encoder = mEncoderMotor.getCurrentPosition();
-		int encoderDist = encoder - mEncoderPrev;
-		mEncoderPrev = encoder;
+		// get current encoder values and compute average delta since last read
+		int encoderDist = 0;
+		for (int i=0; i<mEncoderMotor.length; i++) {
+			int encoder = mEncoderMotor[i].getCurrentPosition();
+			encoderDist += encoder - mEncoderPrev[i];
+			mEncoderPrev[i] = mEncoderMotor[i].getCurrentPosition();
+		}
+		encoderDist /= mEncoderMotor.length;
 
 		// get bearing from IMU gyro
 		double imuBearingDeg = mGyro.getHeading();
 
 		// update accumulated field position
-		final int countsPerRev = 28*20;		// for 20:1 gearbox motor @ 28 counts/motorRev
+		final int countsPerRev = 28*40;		// for 40:1 gearbox motor @ 28 counts/motorRev
 		final double wheelDiam = 4.0;		// wheel diameter (in)
 		double dist = (encoderDist * wheelDiam * Math.PI)/countsPerRev;
 		mPosInt.move(dist, imuBearingDeg);
@@ -175,7 +180,7 @@ public class TankDrivePosInt extends OpMode {
 		telemetry.addData("left pwr", String.format("%.2f", left));
 		telemetry.addData("right pwr", String.format("%.2f", right));
 		telemetry.addData("gamepad1", gamepad1);
-		telemetry.addData("gamepad2", gamepad2);
+		//telemetry.addData("gamepad2", gamepad2);
 		telemetry.addData("position", String.format("%.2f", mPosInt.getX())+", " + String.format("%.2f", mPosInt.getY()));
 	}
 

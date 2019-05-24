@@ -75,7 +75,7 @@ public class MyTankDrive extends OpMode {
 
         // squirrely drive is controlled by the x axis of both sticks
         float xLeft = gamepad1.left_stick_x;
-        float xRight = -gamepad1.right_stick_x;
+        float xRight = gamepad1.right_stick_x;
 
         // scale the joystick value to make it easier to control
         // the robot more precisely at slower speeds.

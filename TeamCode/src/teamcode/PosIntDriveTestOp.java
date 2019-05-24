@@ -208,12 +208,7 @@ public class PosIntDriveTestOp extends OpMode {
     @Override
     public void init() {
         bSetup = false;      // start out in Kp/Ki setup mode
-        AutoLib.HardwareFactory mf = null;
-        final boolean debug = false;
-        //if (debug)
-        //    mf = new AutoLib.TestHardwareFactory(this);
-        //else
-            mf = new AutoLib.RealHardwareFactory(this);
+        AutoLib.HardwareFactory mf = new AutoLib.RealHardwareFactory(this);
 
         // get the motors: depending on the factory we created above, these may be
         // either dummy motors that just log data or real ones that drive the hardware

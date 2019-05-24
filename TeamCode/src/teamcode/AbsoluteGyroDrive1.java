@@ -29,17 +29,13 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-package org.firstinspires.ftc.teamcode._TeleOp;
+package teamcode;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-
-import org.firstinspires.ftc.teamcode._Libs.AutoLib;
-import org.firstinspires.ftc.teamcode._Libs.BNO055IMUHeadingSensor;
-import org.firstinspires.ftc.teamcode._Libs.SensorLib;
+import virtual_robot.controller.OpMode;
+import virtual_robot.hardware.DcMotor;
+import virtual_robot.hardware.bno055.BNO055IMU;
+import virtual_robot.util._Libs.BNO055IMUHeadingSensor;
+import virtual_robot.util._Libs.AutoLib;
 
 /*
  * TeleOp Mode
@@ -48,21 +44,13 @@ import org.firstinspires.ftc.teamcode._Libs.SensorLib;
  * aligned with the robot when the mode is initiated.
  */
 
-@TeleOp(name="AbsoluteGyroDrive1", group="Test")  // @Autonomous(...) is the other common choice
+//@TeleOp(name="AbsoluteGyroDrive1", group="Test")  // @Autonomous(...) is the other common choice
 //@Disabled
 public class  AbsoluteGyroDrive1 extends OpMode {
 
-	DcMotor motorFrontRight;
-	DcMotor motorFrontLeft;
-	DcMotor motorBackRight;
-	DcMotor motorBackLeft;
-
 	boolean bDebug = false;
-
 	AutoLib.AzimuthTimedDriveStep mStep;
-
 	BNO055IMUHeadingSensor mIMU;
-
 	DcMotor mMotors[];
 
 	/**
@@ -82,21 +70,22 @@ public class  AbsoluteGyroDrive1 extends OpMode {
 		 *   "fr" and "br" are front and back right wheels
 		 */
 		try {
-			AutoLib.HardwareFactory mf = null;
-			final boolean debug = false;
-			if (debug)
-				mf = new AutoLib.TestHardwareFactory(this);
-			else
-				mf = new AutoLib.RealHardwareFactory(this);
+			AutoLib.HardwareFactory mf = new AutoLib.RealHardwareFactory(this);
 
-			// get the motors: depending on the factory we created above, these may be
-			// either dummy motors that just log data or real ones that drive the hardware
+			// get the motors:
 			// assumed order is fr, br, fl, bl
 			mMotors = new DcMotor[4];
-			mMotors[0] = mf.getDcMotor("fr");
-			mMotors[1] = mf.getDcMotor("br");
-			(mMotors[2] = mf.getDcMotor("fl")).setDirection(DcMotor.Direction.REVERSE);
-			(mMotors[3] = mf.getDcMotor("bl")).setDirection(DcMotor.Direction.REVERSE);
+			mMotors[0] = mf.getDcMotor("front_right_motor");
+			if (mMotors[0] != null) {
+				mMotors[1] = mf.getDcMotor("back_right_motor");
+				(mMotors[2] = mf.getDcMotor("front_left_motor")).setDirection(DcMotor.Direction.REVERSE);
+				(mMotors[3] = mf.getDcMotor("back_left_motor")).setDirection(DcMotor.Direction.REVERSE);
+			}
+			else {  // assume we're using the 2-wheel bot simulation
+				mMotors[0] = mMotors[1] = mf.getDcMotor("right_motor");
+				(mMotors[2] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
+				(mMotors[3] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
+			}
 
 			// get hardware IMU and wrap gyro in HeadingSensor object usable below
 			mIMU = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
@@ -107,7 +96,7 @@ public class  AbsoluteGyroDrive1 extends OpMode {
 		}
 
 		// create a Step that we will use in teleop mode
-		mStep = new AutoLib.AzimuthTimedDriveStep(this, 0, mIMU, null, mMotors, 0, 0.25f,10000, false);
+		mStep = new AutoLib.AzimuthTimedDriveStep(this, 0, mIMU, null, mMotors, 0, 1.0f,10000, false);
 	}
 
 

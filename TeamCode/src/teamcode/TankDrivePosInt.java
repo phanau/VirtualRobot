@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 package teamcode;
 
 import virtual_robot.controller.OpMode;
+import virtual_robot.controller.XDriveBot;
 import virtual_robot.hardware.DcMotor;
 import virtual_robot.util._Libs.AutoLib;
 import virtual_robot.util._Libs.Range;
@@ -166,11 +167,14 @@ public class TankDrivePosInt extends OpMode {
 
 		// get bearing from IMU gyro
 		double imuBearingDeg = mGyro.getHeading();
-
+		
 		// update accumulated field position
 		final int countsPerRev = 28*40;		// for 40:1 gearbox motor @ 28 counts/motorRev
 		final double wheelDiam = 4.0;		// wheel diameter (in)
 		double dist = (encoderDist * wheelDiam * Math.PI)/countsPerRev;
+		boolean isXdrive = (this.virtualBot.getClass() == XDriveBot.class);  // handle X-drive too ...
+		if (isXdrive)
+			dist *= Math.sqrt(2);   // each wheel rotation moves the bot further with X-drive
 		mPosInt.move(dist, imuBearingDeg);
 
 		/*

@@ -41,7 +41,7 @@ import virtual_robot.util._Libs.AutoLib;
  * TeleOp Mode
  * Enables control of the robot via the gamepad such that the robot moves in the
  * absolute direction and speed indicated by the left joystick, assuming the game console is
- * aligned with the robot when the mode is initiated.
+ * aligned with the robot when the mode is initiated unless initialHeading is set otherwise.
  */
 
 //@TeleOp(name="AbsoluteGyroDrive1", group="Test")  // @Autonomous(...) is the other common choice

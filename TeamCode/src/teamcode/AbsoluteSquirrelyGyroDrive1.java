@@ -107,9 +107,9 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 	@Override
 	public void loop() {
 
-		// motion direction is on the left stick
-		float dx = gamepad1.left_stick_x;
-		float dy = -gamepad1.left_stick_y;	// y is reversed :(
+		// motion direction is on the right stick
+		float dx = gamepad1.right_stick_x;
+		float dy = -gamepad1.right_stick_y;	// y is reversed :(
 
 		// power is the magnitude of the direction vector
 		double power = Math.sqrt(dx*dx + dy*dy);
@@ -127,9 +127,9 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 			mStep.setDirection((float) direction);
 		}
 
-		// vehicle heading (orientation) is on the right stick
-		float hx = gamepad1.right_stick_x;
-		float hy = -gamepad1.right_stick_y;    // y is reversed :(
+		// vehicle heading (orientation) is on the left stick (near the dpad, which also controls heading)
+		float hx = gamepad1.left_stick_x;
+		float hy = -gamepad1.left_stick_y;    // y is reversed :(
 
 		double heading = 0;
 		boolean setHeading = false;

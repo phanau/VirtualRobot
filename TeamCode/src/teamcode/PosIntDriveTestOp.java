@@ -210,6 +210,12 @@ public class PosIntDriveTestOp extends OpMode {
         rh = new RobotHardware();
         rh.init(this);
 
+        // post instructions to console
+        telemetry.addData("PosIntDriveTestOp", "");
+        telemetry.addData("", "autonomous point to point");
+        telemetry.addData("", "navigation using PositionIntegrator");
+        telemetry.addData("", "driven by motor encoders");
+
         // create a PID controller for the sequence
         // parameters of the PID controller for this sequence - assumes 20-gear motors (fast)
         float Kp = 0.02f;        // motor power proportional term correction per degree of deviation

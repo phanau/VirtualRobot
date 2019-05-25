@@ -198,37 +198,17 @@ public class PosIntDriveTestOp extends OpMode {
 
     AutoLib.Sequence mSequence;             // the root of the sequence tree
     boolean bDone;                          // true when the programmed sequence is done
-    DcMotor mMotors[];                      // motors, some of which can be null: assumed order is fr, br, fl, bl
-    BNO055IMUHeadingSensor mGyro;           // gyro to use for heading information
     boolean bSetup;                         // true when we're in "setup mode" where joysticks tweak parameters
     SensorLib.PID mPid;                     // PID controller for the sequence
     EncoderGyroPosInt mPosInt;              // Encoder/gyro-based position integrator to keep track of where we are
     SensorLib.PIDAdjuster mPidAdjuster;     // for interactive adjustment of PID parameters
+    RobotHardware rh;                       // standard hardware set for these tests
 
     @Override
     public void init() {
-        AutoLib.HardwareFactory mf = new AutoLib.RealHardwareFactory(this);
-
-        // get the motors:
-        // assumed order is fr, br, fl, bl
-        mMotors = new DcMotor[4];
-        mMotors[0] = mf.getDcMotor("front_right_motor");
-        if (mMotors[0] != null) {
-            mMotors[1] = mf.getDcMotor("back_right_motor");
-            (mMotors[2] = mf.getDcMotor("front_left_motor")).setDirection(DcMotor.Direction.REVERSE);
-            (mMotors[3] = mf.getDcMotor("back_left_motor")).setDirection(DcMotor.Direction.REVERSE);
-        }
-        else {  // assume we're using the 2-wheel bot simulation
-            mMotors[0] = mMotors[1] = mf.getDcMotor("right_motor");
-            (mMotors[2] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
-            (mMotors[3] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
-        }
-
-        // get hardware IMU and wrap gyro in HeadingSensor object usable below
-        mGyro = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
-        mGyro.init(7);  // orientation of REV hub in my ratbot
-        //mGyro.setDegreesPerTurn(355.0f);     // appears that's what my IMU does ...
-        mGyro.setHeadingOffset(0.0f);        // example: facing due north along field Y-axis (positive CCW)
+        // get hardware
+        rh = new RobotHardware();
+        rh.init(this);
 
         // create a PID controller for the sequence
         // parameters of the PID controller for this sequence - assumes 20-gear motors (fast)
@@ -246,7 +226,7 @@ public class PosIntDriveTestOp extends OpMode {
         double wheelDiam = 4.0;		    // wheel diameter (in)
         Position initialPosn = new Position(DistanceUnit.INCH, 0.0, 0.0, 0.0, 0);
         // example starting position: at origin of field
-        mPosInt = new EncoderGyroPosInt(this, mGyro, mMotors, countsPerRev, wheelDiam, initialPosn);
+        mPosInt = new EncoderGyroPosInt(this, rh.mIMU, rh.mMotors, countsPerRev, wheelDiam, initialPosn);
 
 
         // create an autonomous sequence with the steps to drive
@@ -262,31 +242,31 @@ public class PosIntDriveTestOp extends OpMode {
         float timeout = 2.0f;   // seconds
 
         // add a bunch of position integrator "legs" to the sequence -- uses absolute field coordinate system in inches
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 36, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 36, 36, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,                   // do this move backwards!
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,                   // do this move backwards!
                 new Position(DistanceUnit.INCH, 36, 0, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, -48, -48, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, false));
 
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 36, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, -movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, -movePower, mPid,
                 new Position(DistanceUnit.INCH, 36, 36, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, -movePower, mPid,                   // do this move backwards!
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, -movePower, mPid,                   // do this move backwards!
                 new Position(DistanceUnit.INCH, 36, 0, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, -movePower, mPid,                   // do this move backwards!
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, -movePower, mPid,                   // do this move backwards!
                 new Position(DistanceUnit.INCH, -48, -48, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, false));
 
         // turn to heading zero to finish up
-        mSequence.add(new AutoLib.AzimuthTolerancedTurnStep(this, 0, mGyro, mPid, mMotors, turnPower, tol, 10));
-        mSequence.add(new AutoLib.MoveByTimeStep(mMotors, 0, 0, true));     // stop all motors
+        mSequence.add(new AutoLib.AzimuthTolerancedTurnStep(this, 0, rh.mIMU, mPid, rh.mMotors, turnPower, tol, 10));
+        mSequence.add(new AutoLib.MoveByTimeStep(rh.mMotors, 0, 0, true));     // stop all motors
 
         // start out not-done
         bDone = false;

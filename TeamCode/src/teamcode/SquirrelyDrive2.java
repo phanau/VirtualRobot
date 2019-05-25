@@ -46,12 +46,7 @@ import virtual_robot.util._Libs.Range;
 //@Disabled
 public class SquirrelyDrive2 extends OpMode {
 
-	DcMotor motorFrontRight;
-	DcMotor motorFrontLeft;
-	DcMotor motorBackRight;
-	DcMotor motorBackLeft;
-
-	boolean bDebug = false;
+	RobotHardware rh;
 
 	/**
 	 * Constructor
@@ -68,29 +63,10 @@ public class SquirrelyDrive2 extends OpMode {
 	@Override
 	public void init() {
 
-		/*
-		 * Use the hardwareMap to get the dc motors and servos by name. Note
-		 * that the names of the devices must match the names used when you
-		 * configured your robot and created the configuration file.
-		 */
-		
-		/*
-		 * For this test, we assume the following,
-		 *   There are four motors
-		 *   "fl" and "bl" are front and back left wheels
-		 *   "fr" and "br" are front and back right wheels
-		 */
-		try {
-			motorFrontRight = hardwareMap.dcMotor.get("front_right_motor");
-			motorFrontLeft = hardwareMap.dcMotor.get("front_left_motor");
-			motorBackRight = hardwareMap.dcMotor.get("back_right_motor");
-			motorBackLeft = hardwareMap.dcMotor.get("back_left_motor");
-			motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
-			motorBackLeft.setDirection(DcMotor.Direction.REVERSE);
-		}
-		catch (IllegalArgumentException iax) {
-			bDebug = true;
-		}
+		// get hardware
+		rh = new RobotHardware();
+		rh.init(this);
+
 	}
 
 
@@ -128,11 +104,11 @@ public class SquirrelyDrive2 extends OpMode {
 		double bl = Range.clip(left-xLeft, -1, 1);
 
 		// write the values to the motors
-		if (!bDebug) {
-			motorFrontRight.setPower(fr);
-			motorBackRight.setPower(br);
-			motorFrontLeft.setPower(fl);
-			motorBackLeft.setPower(bl);
+		{
+			rh.mMotors[0].setPower(fr);
+			rh.mMotors[1].setPower(br);
+			rh.mMotors[2].setPower(fl);
+			rh.mMotors[3].setPower(bl);
 		}
 
 		/*

@@ -53,15 +53,11 @@ import virtual_robot.util._Libs.SensorLib;
 //@Disabled
 public class TankDrivePosInt extends OpMode {
 
-	DcMotor mMotors[];
-
+	RobotHardware rh;
 	SensorLib.PositionIntegrator mPosInt;	// position integrator
-	BNO055IMUHeadingSensor mGyro;           // gyro to use for heading information
-
 	DcMotor[] mEncoderMotor;
 	int mEncoderPrev[];		// previous reading of motor encoder
 
-	boolean bDebug = false;
 	boolean bFirstLoop = true;
 
 	/**
@@ -78,43 +74,15 @@ public class TankDrivePosInt extends OpMode {
 	 */
 	@Override
 	public void init() {
-		/*
-		 * Use the hardwareMap to get the dc motors and servos by name. Note
-		 * that the names of the devices must match the names used when you
-		 * configured your robot and created the configuration file.
-		 */
-		
-		try {
-			// get the motors:
-			// assumed order is fr, br, fl, bl
-			AutoLib.HardwareFactory mf = new AutoLib.RealHardwareFactory(this);
-			mMotors = new DcMotor[4];
-			mMotors[0] = mf.getDcMotor("front_right_motor");
-			if (mMotors[0] != null) {
-				mMotors[1] = mf.getDcMotor("back_right_motor");
-				(mMotors[2] = mf.getDcMotor("front_left_motor")).setDirection(DcMotor.Direction.REVERSE);
-				(mMotors[3] = mf.getDcMotor("back_left_motor")).setDirection(DcMotor.Direction.REVERSE);
-			}
-			else {  // assume we're using the 2-wheel bot simulation
-				mMotors[0] = mMotors[1] = mf.getDcMotor("right_motor");
-				(mMotors[2] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
-				(mMotors[3] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
-			}
-		}
-		catch (IllegalArgumentException iax) {
-			bDebug = true;
-		}
+		// get hardware
+		rh = new RobotHardware();
+		rh.init(this);
 
 		// create position integrator
 		mPosInt = new SensorLib.PositionIntegrator();
 
-		// get hardware IMU and wrap gyro in HeadingSensor object usable below
-		mGyro = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
-		mGyro.init(7);  // orientation of REV hub in my ratbot
-		mGyro.setDegreesPerTurn(355.0f);     // appears that's what my IMU does ...
-
 		bFirstLoop = true;
-		mEncoderMotor = mMotors;
+		mEncoderMotor = rh.mMotors;
 		mEncoderPrev = new int[4];
 	}
 
@@ -149,11 +117,11 @@ public class TankDrivePosInt extends OpMode {
 		right = (float)scaleInput(right) * scale;
 
 		// write the values to the motors - for now, front and back motors on each side are set the same
-		if (!bDebug) {
-			mMotors[0].setPower(right);
-			mMotors[1].setPower(right);
-			mMotors[2].setPower(left);
-			mMotors[3].setPower(left);
+		{
+			rh.mMotors[0].setPower(right);
+			rh.mMotors[1].setPower(right);
+			rh.mMotors[2].setPower(left);
+			rh.mMotors[3].setPower(left);
 		}
 
 		// get current encoder values and compute average delta since last read
@@ -166,7 +134,7 @@ public class TankDrivePosInt extends OpMode {
 		encoderDist /= mEncoderMotor.length;
 
 		// get bearing from IMU gyro
-		double imuBearingDeg = mGyro.getHeading();
+		double imuBearingDeg = rh.mIMU.getHeading();
 		
 		// update accumulated field position
 		final int countsPerRev = 28*40;		// for 40:1 gearbox motor @ 28 counts/motorRev

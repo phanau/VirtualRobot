@@ -50,8 +50,7 @@ import virtual_robot.util._Libs.AutoLib;
 public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 
 	AutoLib.SquirrelyGyroTimedDriveStep mStep;
-	BNO055IMUHeadingSensor mIMU;
-	DcMotor mMotors[];
+	RobotHardware rh;
 
 	/**
 	 * Constructor
@@ -63,39 +62,12 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 	@Override
 	public void init() {
 
-		/*
-		 * For this test, we assume the following,
-		 *   There are four motors
-		 *   "fl" and "bl" are front and back left wheels
-		 *   "fr" and "br" are front and back right wheels
-		 */
-		try {
-			AutoLib.HardwareFactory mf = new AutoLib.RealHardwareFactory(this);
-
-			// get the motors:
-			// assumed order is fr, br, fl, bl
-			mMotors = new DcMotor[4];
-			mMotors[0] = mf.getDcMotor("front_right_motor");
-			if (mMotors[0] != null) {
-				mMotors[1] = mf.getDcMotor("back_right_motor");
-				(mMotors[2] = mf.getDcMotor("front_left_motor")).setDirection(DcMotor.Direction.REVERSE);
-				(mMotors[3] = mf.getDcMotor("back_left_motor")).setDirection(DcMotor.Direction.REVERSE);
-			}
-			else {  // assume we're using the 2-wheel bot simulation
-				mMotors[0] = mMotors[1] = mf.getDcMotor("right_motor");
-				(mMotors[2] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
-				(mMotors[3] = mf.getDcMotor("left_motor")).setDirection(DcMotor.Direction.REVERSE);
-			}
-
-			// get hardware IMU and wrap gyro in HeadingSensor object usable below
-			mIMU = new BNO055IMUHeadingSensor(hardwareMap.get(BNO055IMU.class, "imu"));
-			mIMU.init(7);  // orientation of REV hub in my ratbot
-		}
-		catch (IllegalArgumentException iax) {
-		}
+		// get hardware
+		rh = new RobotHardware();
+		rh.init(this);
 
 		// create a Step that we will use in teleop mode
-		mStep = new AutoLib.SquirrelyGyroTimedDriveStep(this, 0, 0, mIMU, null, mMotors, 0, 10000, false);
+		mStep = new AutoLib.SquirrelyGyroTimedDriveStep(this, 0, 0, rh.mIMU, null, rh.mMotors, 0, 10000, false);
 	}
 
 

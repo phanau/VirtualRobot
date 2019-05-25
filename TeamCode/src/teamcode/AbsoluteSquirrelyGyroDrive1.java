@@ -66,8 +66,19 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 		rh = new RobotHardware();
 		rh.init(this);
 
+		// set initial orientation of bot relative to driver (default is 0 degrees == N)
+		float initialHeading = 0.0f;	// N
+		rh.mIMU.setHeadingOffset(initialHeading);
+
+		// post instructions to console
+		telemetry.addData("AbsoluteSquirrelyGyroDrive1", "");
+		telemetry.addData("left stick", " orientation on field");
+		telemetry.addData("dpad", " orientation on field");
+		telemetry.addData("right stick", " motion on field");
+		telemetry.addData("initial heading", initialHeading);
+
 		// create a Step that we will use in teleop mode
-		mStep = new AutoLib.SquirrelyGyroTimedDriveStep(this, 0, 0, rh.mIMU, null, rh.mMotors, 0, 10000, false);
+		mStep = new AutoLib.SquirrelyGyroTimedDriveStep(this, 0, initialHeading, rh.mIMU, null, rh.mMotors, 0, 10000, false);
 	}
 
 

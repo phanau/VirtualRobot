@@ -65,8 +65,18 @@ public class  AbsoluteGyroDrive1 extends OpMode {
 		rh = new RobotHardware();
 		rh.init(this);
 
+		// set initial orientation of bot relative to driver (default is 0 degrees == N)
+		float initialHeading = 0.0f;	// N
+		rh.mIMU.setHeadingOffset(initialHeading);
+
+		// post instructions to console
+		telemetry.addData("AbsoluteGyroDrive1", "");
+		telemetry.addData("left stick", " field orientation and relative motion");
+		telemetry.addData("right stick", " not used");
+		telemetry.addData("initial heading", initialHeading);
+
 		// create a Step that we will use in teleop mode
-		mStep = new AutoLib.AzimuthTimedDriveStep(this, 0, rh.mIMU, null, rh.mMotors, 0, 1.0f,10000, false);
+		mStep = new AutoLib.AzimuthTimedDriveStep(this, initialHeading, rh.mIMU, null, rh.mMotors, 0, 1.0f,10000, false);
 	}
 
 

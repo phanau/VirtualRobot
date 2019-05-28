@@ -2,20 +2,7 @@ package teamcode;
 
 import virtual_robot.controller.OpMode;
 import virtual_robot.controller.XDriveBot;
-import virtual_robot.hardware.ColorSensor;
 import virtual_robot.hardware.DcMotor;
-import virtual_robot.hardware.DistanceSensor;
-import virtual_robot.hardware.GyroSensor;
-import virtual_robot.hardware.Servo;
-import virtual_robot.hardware.Telemetry;
-import virtual_robot.hardware.bno055.BNO055IMU;
-import virtual_robot.util._Libs.BNO055IMUHeadingSensor;
-import virtual_robot.util.navigation.AngleUnit;
-import virtual_robot.util.navigation.AxesOrder;
-import virtual_robot.util.navigation.AxesReference;
-import virtual_robot.util.navigation.DistanceUnit;
-import virtual_robot.util.navigation.Orientation;
-
 import virtual_robot.util.navigation.DistanceUnit;
 import virtual_robot.util.navigation.Position;
 

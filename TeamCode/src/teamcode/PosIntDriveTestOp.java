@@ -137,13 +137,20 @@ public class PosIntDriveTestOp extends OpMode {
         OpMode mOpMode;
         Position mTarget;
         EncoderGyroPosInt mPosInt;
+        double mTol;
+        float maxPower;
+        float minPower = 0.25f;
+        float sgnPower;
 
         public GyroPosIntGuideStep(OpMode opmode, EncoderGyroPosInt posInt, Position target,
-                                   SensorLib.PID pid, ArrayList<AutoLib.SetPower> motorsteps, float power) {
+                                   SensorLib.PID pid, ArrayList<AutoLib.SetPower> motorsteps, float power, double tol) {
             super(opmode, 0, posInt.getGyro(), pid, motorsteps, power);
             mOpMode = opmode;
             mTarget = target;
             mPosInt = posInt;
+            mTol = tol;
+            maxPower = Math.abs(power);
+            sgnPower = (power > 0) ? 1 : -1;
         }
 
         public boolean loop() {
@@ -152,6 +159,15 @@ public class PosIntDriveTestOp extends OpMode {
 
             // update the GyroGuideStep heading to continue heading for the target
             super.setHeading((float) HeadingToTarget(mTarget, mPosInt.getPosition()));
+
+            // when we're close to the target, reduce speed so we don't overshoot
+            Position current = mPosInt.getPosition();
+            float dist = (float)Math.sqrt((mTarget.x-current.x)*(mTarget.x-current.x) + (mTarget.y-current.y)*(mTarget.y-current.y));
+            float brakeDist = (float)mTol * 5;  // empirical ...
+            if (dist < brakeDist) {
+                float power = sgnPower * (minPower + (maxPower-minPower)*(dist/brakeDist));
+                super.setMaxPower(power);
+            }
 
             // run the underlying GyroGuideStep and return what it returns for "done" -
             // currently, it leaves it up to the terminating step to end the Step
@@ -183,7 +199,7 @@ public class PosIntDriveTestOp extends OpMode {
                                  float power, SensorLib.PID pid, Position target, double tolerance, boolean stop)
         {
             super(opmode,
-                    new GyroPosIntGuideStep(opmode, posInt, target, pid, null, power),
+                    new GyroPosIntGuideStep(opmode, posInt, target, pid, null, power, tolerance),
                     new PositionTerminatorStep(opmode, posInt, target, tolerance),
                     motors);
 
@@ -237,14 +253,14 @@ public class PosIntDriveTestOp extends OpMode {
 
         // create an autonomous sequence with the steps to drive
         // several legs of a polygonal course ---
-        float movePower = 0.50f;
-        float turnPower = 0.50f;
+        float movePower = 1.0f;
+        float turnPower = 1.0f;
 
         // create the root Sequence for this autonomous OpMode
         mSequence = new AutoLib.LinearSequence();
 
         // add a bunch of timed "legs" to the sequence - use Gyro heading convention of positive degrees CW from initial heading
-        float tol = 1.0f;   // tolerance in inches
+        float tol = 2.0f;   // tolerance in inches
         float timeout = 2.0f;   // seconds
 
         // add a bunch of position integrator "legs" to the sequence -- uses absolute field coordinate system in inches

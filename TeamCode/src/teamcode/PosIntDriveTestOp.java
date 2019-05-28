@@ -108,12 +108,14 @@ public class PosIntDriveTestOp extends OpMode {
         SensorLib.PositionIntegrator mPosInt;
         Position mTarget;
         double mTol;
+        double mPrevDist;
 
         public PositionTerminatorStep(OpMode opmode, SensorLib.PositionIntegrator posInt, Position target, double tol) {
             mOpMode = opmode;
             mPosInt = posInt;
             mTarget = target;
             mTol = tol;
+            mPrevDist = 1e6;    // infinity
         }
 
         @Override
@@ -127,6 +129,15 @@ public class PosIntDriveTestOp extends OpMode {
                 mOpMode.telemetry.addData("PTS dist", String.format("%.2f", dist));
             }
             boolean bDone = (dist < mTol);
+
+            // try to deal with "circling the drain" problem -- when we're close to the tolerance
+            // circle, but we can't turn sharply enough to get into it, we circle endlessly --
+            // if we detect that situation, just give up and move on.
+            // simple test: if we're close but the distance to the target increases, we've missed it.
+            if (dist < mTol*4 && dist > mPrevDist)
+                bDone = true;
+            mPrevDist = dist;
+
             return bDone;
         }
     }
@@ -138,9 +149,9 @@ public class PosIntDriveTestOp extends OpMode {
         Position mTarget;
         EncoderGyroPosInt mPosInt;
         double mTol;
-        float maxPower;
-        float minPower = 0.25f;
-        float sgnPower;
+        float mMaxPower;
+        float mMinPower = 0.25f;
+        float mSgnPower;
 
         public GyroPosIntGuideStep(OpMode opmode, EncoderGyroPosInt posInt, Position target,
                                    SensorLib.PID pid, ArrayList<AutoLib.SetPower> motorsteps, float power, double tol) {
@@ -149,8 +160,8 @@ public class PosIntDriveTestOp extends OpMode {
             mTarget = target;
             mPosInt = posInt;
             mTol = tol;
-            maxPower = Math.abs(power);
-            sgnPower = (power > 0) ? 1 : -1;
+            mMaxPower = Math.abs(power);
+            mSgnPower = (power > 0) ? 1 : -1;
         }
 
         public boolean loop() {
@@ -158,14 +169,15 @@ public class PosIntDriveTestOp extends OpMode {
             mPosInt.loop();
 
             // update the GyroGuideStep heading to continue heading for the target
-            super.setHeading((float) HeadingToTarget(mTarget, mPosInt.getPosition()));
+            float direction = (float) HeadingToTarget(mTarget, mPosInt.getPosition());
+            super.setHeading(direction);
 
             // when we're close to the target, reduce speed so we don't overshoot
             Position current = mPosInt.getPosition();
             float dist = (float)Math.sqrt((mTarget.x-current.x)*(mTarget.x-current.x) + (mTarget.y-current.y)*(mTarget.y-current.y));
             float brakeDist = (float)mTol * 5;  // empirical ...
             if (dist < brakeDist) {
-                float power = sgnPower * (minPower + (maxPower-minPower)*(dist/brakeDist));
+                float power = mSgnPower * (mMinPower + (mMaxPower-mMinPower)*(dist/brakeDist));
                 super.setMaxPower(power);
             }
 
@@ -260,7 +272,7 @@ public class PosIntDriveTestOp extends OpMode {
         mSequence = new AutoLib.LinearSequence();
 
         // add a bunch of timed "legs" to the sequence - use Gyro heading convention of positive degrees CW from initial heading
-        float tol = 2.0f;   // tolerance in inches
+        float tol = 1.0f;   // tolerance in inches
         float timeout = 2.0f;   // seconds
 
         // add a bunch of position integrator "legs" to the sequence -- uses absolute field coordinate system in inches

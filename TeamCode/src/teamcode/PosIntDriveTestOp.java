@@ -23,7 +23,7 @@ import java.util.ArrayList;
 //@Disabled
 public class PosIntDriveTestOp extends OpMode {
 
-    // use a single motor encoder and gyro to track absolute field position
+    // use motor encoders and gyro to track absolute field position
     class EncoderGyroPosInt extends SensorLib.PositionIntegrator {
         OpMode mOpMode;
         HeadingSensor mGyro;
@@ -48,7 +48,7 @@ public class PosIntDriveTestOp extends OpMode {
         }
 
         public boolean loop() {
-            // get initial encoder value
+            // get initial encoder values
             if (mFirstLoop) {
                 for (int i=0; i<mEncoderMotor.length; i++)
                     mEncoderPrev[i] = mEncoderMotor[i].getCurrentPosition();

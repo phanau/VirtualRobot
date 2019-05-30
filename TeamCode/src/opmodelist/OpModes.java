@@ -17,7 +17,7 @@ public class OpModes {
 
                     "TwoWheelDemo", "TwoWheelArcadeDrive", "MechBotDemo", "MechBotAutoDemo", "MyTankDrive", "PosIntDriveTestOp",
                     "AbsoluteGyroDrive1", "AbsoluteSquirrelyGyroDrive1", "SquirrelyDrive1", "SquirrelyDrive2", "TankDrive1",
-                    "TankDrivePosInt"
+                    "TankDrivePosInt", "SquirrelyGyroDriveTestOp"
 
             );
 }

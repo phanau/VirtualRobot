@@ -46,6 +46,10 @@ public class SquirrelyGyroDriveTestOp extends OpMode {
 
         // add a bunch of timed "legs" to the sequence - use Gyro heading convention of positive degrees CCW from initial heading
         float leg =  3.0f;  // time along each leg of the polygon
+        boolean isXdrive = (this.virtualBot.getClass() == XDriveBot.class);  // handle X-drive too ...
+        if (isXdrive)
+            leg /= Math.sqrt(2);   // each wheel rotation moves the bot further with X-drive
+        
         SensorLib.PID pid = null;         // use default PID provided by the step
 
         // drive a square while maintaining constant orientation (0)

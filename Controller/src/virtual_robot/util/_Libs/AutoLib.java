@@ -1027,7 +1027,7 @@ public class AutoLib {
                 mPid = new SensorLib.PID(Kp, Ki, Kd, KiCutoff);
             }
             mMotorSteps = motorsteps;
-            mMaxPower = power;
+            mPower = mMaxPower = power;
         }
 
         // set max allowed power including direction correction ---

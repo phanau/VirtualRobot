@@ -78,6 +78,8 @@ public class MechanumBot extends VirtualBot {
         double[] deltaPos = new double[4];
         double[] w = new double[4];
 
+        super.updateStateAndSensors(millis);
+
         for (int i = 0; i < 4; i++) {
             double pos = motors[i].getActualPosition();
             motors[i].updatePosition(millis);

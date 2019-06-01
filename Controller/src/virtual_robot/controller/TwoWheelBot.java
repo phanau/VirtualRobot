@@ -60,6 +60,8 @@ public class TwoWheelBot extends VirtualBot {
     }
 
     public synchronized void updateStateAndSensors(double millis){
+        super.updateStateAndSensors(millis);
+
         double leftPos = leftMotor.getActualPosition();
         double rightPos = rightMotor.getActualPosition();
         leftMotor.updatePosition(millis);

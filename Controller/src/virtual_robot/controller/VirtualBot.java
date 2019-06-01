@@ -54,7 +54,11 @@ public abstract class VirtualBot {
         fieldPane.getChildren().add(displayGroup);
     }
 
-    public abstract void updateStateAndSensors(double millis);
+    public void updateStateAndSensors(double millis) {
+        // write current position to trace in CSV-friendly format so we can plot data in Excel
+        // double inches = 144/fieldWidth;
+        //System.out.println("updateStateAndSensors," + millis + "," + x*inches + "," + y*inches);
+    }
 
     public synchronized void updateDisplay(){
         double displayX = halfFieldWidth + x - halfBotWidth;

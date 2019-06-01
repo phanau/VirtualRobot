@@ -230,6 +230,7 @@ public class PosIntDriveTestOp extends OpMode {
         telemetry.addData("", "autonomous point to point");
         telemetry.addData("", "navigation using PositionIntegrator");
         telemetry.addData("", "driven by motor encoders");
+        telemetry.addData("", "works with all drive types.");
 
         // create a PID controller for the sequence
         // parameters of the PID controller for this sequence - assumes 20-gear motors (fast)

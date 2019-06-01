@@ -119,8 +119,8 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
         double mTol;
         double mPrevDist;
 
-        public PositionTerminatorStep(OpMode opmode, SensorLib.PositionIntegrator posInt, Position target, double tol) {
-            mOpMode = opmode;
+        public PositionTerminatorStep(SensorLib.PositionIntegrator posInt, Position target, double tol) {
+            mOpMode = AutoLib.mOpMode;
             mPosInt = posInt;
             mTarget = target;
             mTol = tol;
@@ -162,11 +162,11 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
         float mMinPower = 0.25f;
         float mSgnPower;
 
-        public SqGyroPosIntGuideStep(OpMode opmode, EncoderGyroPosInt posInt, Position target, float heading,
+        public SqGyroPosIntGuideStep(EncoderGyroPosInt posInt, Position target, float heading,
                                    SensorLib.PID pid, ArrayList<AutoLib.SetPower> motorsteps, float power, double tol) {
             // this.preAdd(new SquirrelyGyroGuideStep(mode, direction, heading, gyro, pid, steps, power));
-            super(opmode, 0, heading, posInt.getGyro(), pid, motorsteps, power);
-            mOpMode = opmode;
+            super(0, heading, posInt.getGyro(), pid, motorsteps, power);
+            mOpMode = AutoLib.mOpMode;
             mTarget = target;
             mPosInt = posInt;
             mTol = tol;
@@ -212,21 +212,18 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
     // Step: drive to given absolute field position while facing in the given direction using given EncoderGyroPosInt
     class SqPosIntDriveToStep extends AutoLib.GuidedTerminatedDriveStep {
 
-        OpMode mOpMode;
         EncoderGyroPosInt mPosInt;
         Position mTarget;
         AutoLib.GyroGuideStep mGuideStep;
         PositionTerminatorStep mTerminatorStep;
 
-        public SqPosIntDriveToStep(OpMode opmode, EncoderGyroPosInt posInt, DcMotor[] motors,
+        public SqPosIntDriveToStep(EncoderGyroPosInt posInt, DcMotor[] motors,
                                  float power, SensorLib.PID pid, Position target, float heading, double tolerance, boolean stop)
         {
-            super(opmode,
-                    new SqGyroPosIntGuideStep(opmode, posInt, target, heading, pid, null, power, tolerance),
-                    new PositionTerminatorStep(opmode, posInt, target, tolerance),
+            super(new SqGyroPosIntGuideStep(posInt, target, heading, pid, null, power, tolerance),
+                    new PositionTerminatorStep(posInt, target, tolerance),
                     motors);
 
-            mOpMode = opmode;
             mPosInt = posInt;
             mTarget = target;
         }
@@ -245,6 +242,9 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
 
     @Override
     public void init() {
+        // tell AutoLib about this client OpMode
+        AutoLib.mOpMode = this;
+
         // get hardware
         rh = new RobotHardware();
         rh.init(this);
@@ -288,30 +288,30 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
         float timeout = 2.0f;   // seconds
 
         // add a bunch of position integrator "legs" to the sequence -- uses absolute field coordinate system in inches
-        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 36, 0., 0), 0, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 36, 36, 0., 0), 0, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 36, 0, 0., 0), 0, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, -48, -48, 0., 0), 0, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 0, 0., 0), 0, tol, false));
 
-        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 36, 0., 0), 90, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 36, 36, 0., 0), 90, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 36, 0, 0., 0), 180, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, -48, -48, 0., 0), -90, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 0, 0., 0), 0, tol, false));
 
         // turn to heading zero to finish up
-        mSequence.add(new AutoLib.AzimuthTolerancedTurnStep(this, 0, rh.mIMU, mPid, rh.mMotors, turnPower, tol, 10));
+        mSequence.add(new AutoLib.AzimuthTolerancedTurnStep(0, rh.mIMU, mPid, rh.mMotors, turnPower, tol, 10));
         mSequence.add(new AutoLib.MoveByTimeStep(rh.mMotors, 0, 0, true));     // stop all motors
 
         // start out not-done
@@ -319,6 +319,8 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
     }
 
     public void loop() {
+        // report elapsed time to test Suspend/Resume
+        telemetry.addData("elapsed time", this.getRuntime());
 
         if (gamepad1.y)
             bSetup = true;      // Y button: enter "setup mode" using controller inputs to set Kp and Ki

@@ -319,6 +319,12 @@ public class AutoLib {
             mCount = mCount0 = loopCount;
         }
 
+        public LogCountStep(String name, int loopCount) {
+            mOpMode = AutoLib.mOpMode;
+            mName = name;
+            mCount = mCount0 = loopCount;
+        }
+
         public boolean loop() {
             super.loop();
 
@@ -350,6 +356,12 @@ public class AutoLib {
 
         public LogTimeStep(OpMode opMode, String name, double seconds) {
             mOpMode = opMode;
+            mName = name;
+            mTimer = new Timer(seconds);
+        }
+
+        public LogTimeStep(String name, double seconds) {
+            mOpMode = AutoLib.mOpMode;
             mName = name;
             mTimer = new Timer(seconds);
         }
@@ -621,6 +633,18 @@ public class AutoLib {
         public GyroGuideStep(OpMode mode, float direction, HeadingSensor gyro, SensorLib.PID pid,
                              ArrayList<SetPower> motorsteps, float power)
         {
+            ctor(mode,direction,gyro,pid,motorsteps,power);
+        }
+
+        public GyroGuideStep(float direction, HeadingSensor gyro, SensorLib.PID pid,
+                ArrayList<SetPower> motorsteps, float power)
+        {
+            ctor(AutoLib.mOpMode,direction,gyro,pid,motorsteps,power);
+        }
+
+        private void ctor(OpMode mode, float direction, HeadingSensor gyro, SensorLib.PID pid,
+                    ArrayList<SetPower> motorsteps, float power)
+        {
             mOpMode = mode;
             mDirection = direction;
             mGyro = gyro;
@@ -732,6 +756,16 @@ public class AutoLib {
 
         public ErrorGuideStep(OpMode mode, SensorLib.PID pid, ArrayList<SetPower> motorsteps, float power)
         {
+            ctor(mode,pid,motorsteps,power);
+        }
+
+        public ErrorGuideStep(SensorLib.PID pid, ArrayList<SetPower> motorsteps, float power)
+        {
+            ctor(AutoLib.mOpMode,pid,motorsteps,power);
+        }
+
+        private void ctor(OpMode mode, SensorLib.PID pid, ArrayList<SetPower> motorsteps, float power)
+        {
             mOpMode = mode;
             mDirection = 0;     // initially no error
             if (pid != null)
@@ -825,6 +859,10 @@ public class AutoLib {
 
         public MotorLogStep(OpMode opmode) {
             mOpMode = opmode;
+        }
+
+        public MotorLogStep() {
+            mOpMode = AutoLib.mOpMode;
         }
 
         public void setDirection(float direction)              // absolute
@@ -936,6 +974,16 @@ public class AutoLib {
 
         public DistanceSensorGuideStep(OpMode opmode, DistanceSensor ds, float distance, ArrayList<SetPower> steps)
         {
+            ctor(opmode,ds,distance,steps);
+        }
+
+        public DistanceSensorGuideStep(DistanceSensor ds, float distance, ArrayList<SetPower> steps)
+        {
+            ctor(AutoLib.mOpMode,ds,distance,steps);
+        }
+
+        private void ctor(OpMode opmode, DistanceSensor ds, float distance, ArrayList<SetPower> steps)
+        {
             mOpMode = opmode;
             mDistanceSensor = ds;
             mDistance = distance;
@@ -964,6 +1012,16 @@ public class AutoLib {
     static public class GuidedTerminatedDriveStep extends AutoLib.ConcurrentSequence {
 
         public GuidedTerminatedDriveStep(OpMode mode, AutoLib.MotorGuideStep guideStep, AutoLib.MotorGuideStep terminatorStep, DcMotor[] motors)
+        {
+            ctor(mode,guideStep,terminatorStep,motors);
+        }
+
+        public GuidedTerminatedDriveStep(AutoLib.MotorGuideStep guideStep, AutoLib.MotorGuideStep terminatorStep, DcMotor[] motors)
+        {
+           ctor(AutoLib.mOpMode,guideStep,terminatorStep,motors);
+        }
+
+        private void ctor(OpMode mode, AutoLib.MotorGuideStep guideStep, AutoLib.MotorGuideStep terminatorStep, DcMotor[] motors)
         {
             // add a concurrent Step to control each motor
             ArrayList<AutoLib.SetPower> steps = new ArrayList<AutoLib.SetPower>();
@@ -1013,6 +1071,18 @@ public class AutoLib {
         private float mMaxPower;                            // max allowed power including direction correction
 
         public SquirrelyGyroGuideStep(OpMode mode, float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                      ArrayList<AutoLib.SetPower> motorsteps, float power)
+        {
+            ctor(mode,direction,heading,gyro,pid,motorsteps,power);
+        }
+
+        public SquirrelyGyroGuideStep(float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                    ArrayList<AutoLib.SetPower> motorsteps, float power)
+        {
+            ctor(AutoLib.mOpMode,direction,heading,gyro,pid,motorsteps,power);
+        }
+
+        private void ctor(OpMode mode, float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
                                       ArrayList<AutoLib.SetPower> motorsteps, float power) {
             mOpMode = mode;
             mDirection = direction;
@@ -1127,12 +1197,36 @@ public class AutoLib {
         public AzimuthTimedDriveStep(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
                                      DcMotor motors[], float power, float maxPower, float time, boolean stop)
         {
-            this(mode, heading, gyro, pid, motors, power, time, stop);
+            ctor1(mode,heading,gyro,pid,motors,power,maxPower,time,stop);
+        }
+
+        public AzimuthTimedDriveStep(float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                     DcMotor motors[], float power, float maxPower, float time, boolean stop)
+        {
+            ctor1(AutoLib.mOpMode,heading,gyro,pid,motors,power,maxPower,time,stop);
+        }
+
+        private void ctor1(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                     DcMotor motors[], float power, float maxPower, float time, boolean stop)
+        {
+            ctor2(mode, heading, gyro, pid, motors, power, time, stop);
             this.setMaxPower(maxPower);
         }
 
         public AzimuthTimedDriveStep(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
                                      DcMotor motors[], float power, float time, boolean stop)
+        {
+            ctor2(mode,heading,gyro,pid,motors,power,time,stop);
+        }
+
+        public AzimuthTimedDriveStep(float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                     DcMotor motors[], float power, float time, boolean stop)
+        {
+            ctor2(AutoLib.mOpMode,heading,gyro,pid,motors,power,time,stop);
+        }
+
+        private void ctor2(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                           DcMotor motors[], float power, float time, boolean stop)
         {
             // add a concurrent Step to control each motor
             ArrayList<SetPower> steps = new ArrayList<SetPower>();
@@ -1169,11 +1263,35 @@ public class AutoLib {
         public AzimuthCountedDriveStep(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
                                        DcMotor motors[], float power, float maxPower, int count, boolean stop)
         {
-            this(mode, heading, gyro, pid, motors, power, count, stop);
+            ctor1(mode,heading,gyro,pid,motors,power,maxPower,count,stop);
+        }
+
+        public AzimuthCountedDriveStep(float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                       DcMotor motors[], float power, float maxPower, int count, boolean stop)
+        {
+            ctor1(AutoLib.mOpMode,heading,gyro,pid,motors,power,maxPower,count,stop);
+        }
+
+        private void ctor1(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                       DcMotor motors[], float power, float maxPower, int count, boolean stop)
+        {
+            ctor2(mode, heading, gyro, pid, motors, power, count, stop);
             this.setMaxPower(maxPower);
         }
 
         public AzimuthCountedDriveStep(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                       DcMotor motors[], float power, int count, boolean stop)
+        {
+            ctor2(mode,heading,gyro,pid,motors,power,count,stop);
+        }
+
+        public AzimuthCountedDriveStep(float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                       DcMotor motors[], float power, int count, boolean stop)
+        {
+            ctor2(AutoLib.mOpMode,heading,gyro,pid,motors,power,count,stop);
+        }
+
+        private void ctor2(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
                                        DcMotor motors[], float power, int count, boolean stop)
         {
             // add a concurrent Step to control each motor
@@ -1210,6 +1328,18 @@ public class AutoLib {
     static public class AzimuthDistanceDriveStep extends ConcurrentSequence implements SetDirectionHeadingPower {
 
         public AzimuthDistanceDriveStep(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                        DcMotor motors[], float power, DistanceSensor ds, float distance)
+        {
+            ctor(mode,heading,gyro,pid,motors,power,ds,distance);
+        }
+
+        public AzimuthDistanceDriveStep(float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                        DcMotor motors[], float power, DistanceSensor ds, float distance)
+        {
+            ctor(AutoLib.mOpMode,heading,gyro,pid,motors,power,ds,distance);
+        }
+
+        private void ctor(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
                                         DcMotor motors[], float power, DistanceSensor ds, float distance)
         {
             // add a concurrent Step to control each motor
@@ -1255,6 +1385,12 @@ public class AutoLib {
             super(mode, heading, gyro, pid, motors, 0, power, time, stop);
         }
 
+        public AzimuthTimedTurnStep(float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                    DcMotor motors[], float power, float time, boolean stop)
+        {
+            super(AutoLib.mOpMode, heading, gyro, pid, motors, 0, power, time, stop);
+        }
+
     }
 
     // a Step that turns in place -
@@ -1262,6 +1398,18 @@ public class AutoLib {
     static public class AzimuthTolerancedTurnStep extends ConcurrentSequence implements SetDirectionHeadingPower {
 
         public AzimuthTolerancedTurnStep(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                         DcMotor motors[], float power, float tol, float timeout)
+        {
+            ctor(mode,heading,gyro,pid,motors,power,tol,timeout);
+        }
+
+        public AzimuthTolerancedTurnStep(float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                         DcMotor motors[], float power, float tol, float timeout)
+        {
+            ctor(AutoLib.mOpMode,heading,gyro,pid,motors,power,tol,timeout);
+        }
+
+        private void ctor(OpMode mode, float heading, HeadingSensor gyro, SensorLib.PID pid,
                                          DcMotor motors[], float power, float tol, float timeout)
         {
             // add a concurrent Step to control each motor
@@ -1353,6 +1501,18 @@ public class AutoLib {
         public SquirrelyGyroCountedDriveStep(OpMode mode, float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
                                              DcMotor motors[], float power, int count, boolean stop)
         {
+            ctor(mode,direction,heading,gyro,pid,motors,power,count,stop);
+        }
+
+        public SquirrelyGyroCountedDriveStep(float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                             DcMotor motors[], float power, int count, boolean stop)
+        {
+            ctor(AutoLib.mOpMode,direction,heading,gyro,pid,motors,power,count,stop);
+        }
+
+        private void ctor(OpMode mode, float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                             DcMotor motors[], float power, int count, boolean stop)
+        {
             // add a concurrent Step to control each motor
             ArrayList<SetPower> steps = new ArrayList<SetPower>();
             for (DcMotor em : motors)
@@ -1388,6 +1548,19 @@ public class AutoLib {
 
         public SquirrelyGyroDistanceDriveStep(OpMode mode, float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
                                               DcMotor motors[], float power, DistanceSensor ds, float distance)
+        {
+            ctor(mode,direction,heading,gyro,pid,motors,power,ds,distance);
+        }
+
+        public SquirrelyGyroDistanceDriveStep(float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                              DcMotor motors[], float power, DistanceSensor ds, float distance)
+        {
+            ctor(AutoLib.mOpMode,direction,heading,gyro,pid,motors,power,ds,distance);
+        }
+
+        private void ctor(OpMode mode, float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                DcMotor motors[], float power, DistanceSensor ds, float distance)
+
         {
             // add a concurrent Step to control each motor
             ArrayList<SetPower> steps = new ArrayList<SetPower>();
@@ -1976,6 +2149,9 @@ public class AutoLib {
 
         public RealHardwareFactory(OpMode opMode) {
             mOpMode = opMode;
+        }
+        public RealHardwareFactory() {
+            mOpMode = AutoLib.mOpMode;
         }
 
         public DcMotor getDcMotor(String name){

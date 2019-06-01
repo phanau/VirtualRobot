@@ -31,7 +31,7 @@ public class SquirrelyGyroDriveTestOp extends OpMode {
 
     @Override
     public void init() {
-        // tell AutoLib about this client OpMode so Suspend/Resume of Timers will work in simulator
+        // tell AutoLib about this client OpMode
         AutoLib.mOpMode = this;
 
         // get hardware

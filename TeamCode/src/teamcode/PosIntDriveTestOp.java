@@ -97,8 +97,8 @@ public class PosIntDriveTestOp extends OpMode {
         double mTol;
         double mPrevDist;
 
-        public PositionTerminatorStep(OpMode opmode, SensorLib.PositionIntegrator posInt, Position target, double tol) {
-            mOpMode = opmode;
+        public PositionTerminatorStep(SensorLib.PositionIntegrator posInt, Position target, double tol) {
+            mOpMode = AutoLib.mOpMode;
             mPosInt = posInt;
             mTarget = target;
             mTol = tol;
@@ -140,10 +140,10 @@ public class PosIntDriveTestOp extends OpMode {
         float mMinPower = 0.25f;
         float mSgnPower;
 
-        public GyroPosIntGuideStep(OpMode opmode, EncoderGyroPosInt posInt, Position target,
+        public GyroPosIntGuideStep(EncoderGyroPosInt posInt, Position target,
                                    SensorLib.PID pid, ArrayList<AutoLib.SetPower> motorsteps, float power, double tol) {
-            super(opmode, 0, posInt.getGyro(), pid, motorsteps, power);
-            mOpMode = opmode;
+            super(0, posInt.getGyro(), pid, motorsteps, power);
+            mOpMode = AutoLib.mOpMode;
             mTarget = target;
             mPosInt = posInt;
             mTol = tol;
@@ -188,21 +188,18 @@ public class PosIntDriveTestOp extends OpMode {
     // Step: drive to given absolute field position using given EncoderGyroPosInt
     class PosIntDriveToStep extends AutoLib.GuidedTerminatedDriveStep {
 
-        OpMode mOpMode;
         EncoderGyroPosInt mPosInt;
         Position mTarget;
         AutoLib.GyroGuideStep mGuideStep;
         PositionTerminatorStep mTerminatorStep;
 
-        public PosIntDriveToStep(OpMode opmode, EncoderGyroPosInt posInt, DcMotor[] motors,
+        public PosIntDriveToStep(EncoderGyroPosInt posInt, DcMotor[] motors,
                                  float power, SensorLib.PID pid, Position target, double tolerance, boolean stop)
         {
-            super(opmode,
-                    new GyroPosIntGuideStep(opmode, posInt, target, pid, null, power, tolerance),
-                    new PositionTerminatorStep(opmode, posInt, target, tolerance),
+            super(new GyroPosIntGuideStep(posInt, target, pid, null, power, tolerance),
+                    new PositionTerminatorStep(posInt, target, tolerance),
                     motors);
 
-            mOpMode = opmode;
             mPosInt = posInt;
             mTarget = target;
         }
@@ -221,6 +218,9 @@ public class PosIntDriveTestOp extends OpMode {
 
     @Override
     public void init() {
+        // tell AutoLib about this client OpMode
+        AutoLib.mOpMode = this;
+
         // get hardware
         rh = new RobotHardware();
         rh.init(this);
@@ -264,30 +264,30 @@ public class PosIntDriveTestOp extends OpMode {
         float timeout = 2.0f;   // seconds
 
         // add a bunch of position integrator "legs" to the sequence -- uses absolute field coordinate system in inches
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 36, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 36, 36, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,                   // do this move backwards!
+        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,                   // do this move backwards!
                 new Position(DistanceUnit.INCH, 36, 0, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, -48, -48, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, false));
 
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 36, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, -movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, -movePower, mPid,
                 new Position(DistanceUnit.INCH, 36, 36, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, -movePower, mPid,                   // do this move backwards!
+        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, -movePower, mPid,                   // do this move backwards!
                 new Position(DistanceUnit.INCH, 36, 0, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, -movePower, mPid,                   // do this move backwards!
+        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, -movePower, mPid,                   // do this move backwards!
                 new Position(DistanceUnit.INCH, -48, -48, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, false));
 
         // turn to heading zero to finish up
-        mSequence.add(new AutoLib.AzimuthTolerancedTurnStep(this, 0, rh.mIMU, mPid, rh.mMotors, turnPower, tol, 10));
+        mSequence.add(new AutoLib.AzimuthTolerancedTurnStep(0, rh.mIMU, mPid, rh.mMotors, turnPower, tol, 10));
         mSequence.add(new AutoLib.MoveByTimeStep(rh.mMotors, 0, 0, true));     // stop all motors
 
         // start out not-done
@@ -295,6 +295,8 @@ public class PosIntDriveTestOp extends OpMode {
     }
 
     public void loop() {
+        // report elapsed time to test Suspend/Resume
+        telemetry.addData("elapsed time", this.getRuntime());
 
         if (gamepad1.y)
             bSetup = true;      // Y button: enter "setup mode" using controller inputs to set Kp and Ki

@@ -26,6 +26,8 @@ import java.util.concurrent.TimeUnit;
 // a library of classes that support autonomous opmode programming
 public class AutoLib {
 
+    public static OpMode mOpMode;  // the current OpMode client of AutoLib
+
     // the base class from which everything else derives.
     // each action in an autonomous sequence is a Step of some kind.
     // a Step may be simple (like run a Motor) or a composite of several Steps which
@@ -1301,8 +1303,22 @@ public class AutoLib {
     // uses a SquirrelyGyroGuideStep to adjust power to 4 motors in assumed order fr, br, fl, bl
     static public class SquirrelyGyroTimedDriveStep extends AutoLib.ConcurrentSequence implements SetDirectionHeadingPower {
 
+        // this ctor assumes AutoLib.mOpMode has been set by the client OpMode
+        public SquirrelyGyroTimedDriveStep(float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                                           DcMotor motors[], float power, float time, boolean stop)
+        {
+            ctor(AutoLib.mOpMode,direction,heading,gyro,pid,motors,power,time,stop);
+        }
+
+        // legacy form of ctor which explicitly provides the client OpMode
         public SquirrelyGyroTimedDriveStep(OpMode mode, float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
                                            DcMotor motors[], float power, float time, boolean stop)
+        {
+            ctor(mode,direction,heading,gyro,pid,motors,power,time,stop);
+        }
+
+        private void ctor(OpMode mode, float direction, float heading, HeadingSensor gyro, SensorLib.PID pid,
+                          DcMotor motors[], float power, float time, boolean stop)
         {
             // add a concurrent Step to control each motor
             ArrayList<AutoLib.SetPower> steps = new ArrayList<AutoLib.SetPower>();
@@ -1892,21 +1908,21 @@ public class AutoLib {
 
     // timer
     static public class Timer {
-        long mStartTime;
+        double mStartTime;
         double mSeconds;
 
         public Timer(double seconds) {
-            mStartTime = 0L;        // creation time is NOT start time
+            mStartTime = 0;        // creation time is NOT start time
             mSeconds = seconds;
         }
 
         public void start() {
-            mStartTime = System.nanoTime();
+            mStartTime = mOpMode.getRuntime();
         }
 
         // return elapsed time in seconds since timer was created or restarted
         public double elapsed() {
-            return (double) (System.nanoTime() - mStartTime) / (double) TimeUnit.SECONDS.toNanos(1L);
+            return (mOpMode.getRuntime() - mStartTime);
         }
 
         public double remaining() {

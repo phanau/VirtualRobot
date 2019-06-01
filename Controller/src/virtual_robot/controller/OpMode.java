@@ -9,7 +9,9 @@ import virtual_robot.hardware.Telemetry;
 public class OpMode extends LinearOpMode {
 
     // internal time tracking
-    private long startTime = 0; // in nanoseconds
+    private long _startTime = 0;        // in nanoseconds
+    private long _suspendedTime = 0;    // in nanoseconds
+    private long _prevTick = 0;         // in nanoseconds
 
     public OpMode(){}
 
@@ -35,8 +37,15 @@ public class OpMode extends LinearOpMode {
         init();
         telemetry.update();
         waitForStart();
+        resetStartTime();
         while (opModeIsActive()) {
-            if (!bSuspend.value) {
+            long tick = System.nanoTime();
+            long deltaT = tick-_prevTick;
+            _prevTick = tick;
+            if (bSuspend.value) {
+                _suspendedTime += deltaT;
+            }
+            else {
                 loop();
                 telemetry.update();
             }
@@ -52,14 +61,16 @@ public class OpMode extends LinearOpMode {
      */
     public double getRuntime() {
         final double NANOSECONDS_PER_SECOND = TimeUnit.SECONDS.toNanos(1);
-        return (System.nanoTime() - startTime) / NANOSECONDS_PER_SECOND;
+        double elapsedTime = (System.nanoTime()-_startTime-_suspendedTime) / NANOSECONDS_PER_SECOND;
+        return elapsedTime;
     }
 
     /**
      * Reset the start time to zero.
      */
     public void resetStartTime() {
-        startTime = System.nanoTime();
+        _startTime = _prevTick = System.nanoTime();
+        _suspendedTime = 0;
     }
 
 }

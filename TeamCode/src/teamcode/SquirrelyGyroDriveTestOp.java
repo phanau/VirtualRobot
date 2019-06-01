@@ -31,6 +31,9 @@ public class SquirrelyGyroDriveTestOp extends OpMode {
 
     @Override
     public void init() {
+        // tell AutoLib about this client OpMode so Suspend/Resume of Timers will work in simulator
+        AutoLib.mOpMode = this;
+
         // get hardware
         rh = new RobotHardware();
         rh.init(this);
@@ -56,17 +59,17 @@ public class SquirrelyGyroDriveTestOp extends OpMode {
         mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this, 180, 0, mGyro, pid, mMotors, power, leg/2, false));
 
         // drive a square while maintaining constant orientation (0)
-        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this, -90, 0, mGyro, pid, mMotors, power, leg/2, false));
-        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this,   0, 0, mGyro, pid, mMotors, power, leg, false));
-        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this,  90, 0, mGyro, pid, mMotors, power, leg, false));
-        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this, 180, 0, mGyro, pid, mMotors, power, leg, false));
-        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this, 270, 0, mGyro, pid, mMotors, power, leg/2, false));
+        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(-90, 0, mGyro, pid, mMotors, power, leg/2, false));
+        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(0, 0, mGyro, pid, mMotors, power, leg, false));
+        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(90, 0, mGyro, pid, mMotors, power, leg, false));
+        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(180, 0, mGyro, pid, mMotors, power, leg, false));
+        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(270, 0, mGyro, pid, mMotors, power, leg/2, false));
 
         // ... and then a diamond
-        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this, -45, 0, mGyro, pid, mMotors, power, leg, false));
-        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this,  45, 0, mGyro, pid, mMotors, power, leg, false));
-        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this, 135, 0, mGyro, pid, mMotors, power, leg, false));
-        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this, 225, 0, mGyro, pid, mMotors, power, leg, false));
+        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(-45, 0, mGyro, pid, mMotors, power, leg, false));
+        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(45, 0, mGyro, pid, mMotors, power, leg, false));
+        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(135, 0, mGyro, pid, mMotors, power, leg, false));
+        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(225, 0, mGyro, pid, mMotors, power, leg, false));
 
         // ... and then sort of a polygonal circle
         int n = 60;     // number of sides
@@ -74,7 +77,7 @@ public class SquirrelyGyroDriveTestOp extends OpMode {
             float heading = 360*i/n - 90;
             boolean stop = (i==n);
             int t = (i==0 || i==n) ? 2 : 4;
-            mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this, heading, 0, mGyro, pid, mMotors, power, t*leg/n, stop));
+            mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(heading, 0, mGyro, pid, mMotors, power, t*leg/n, stop));
         }
 
         // start out not-done
@@ -88,6 +91,8 @@ public class SquirrelyGyroDriveTestOp extends OpMode {
 
     @Override
     public void loop() {
+        // report elapsed time to test Suspend/Resume
+        telemetry.addData("elapsed time", this.getRuntime());
 
         // until we're done, keep looping through the current Step(s)
         if (!bDone)

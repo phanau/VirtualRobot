@@ -31,7 +31,7 @@ public abstract class LinearOpMode extends VirtualRobotController.LinearOpModeBa
      * OpModes must override the abstract runOpMode() method.
      */
     public abstract void runOpMode();
-    public void runOpMode(boolean bSuspend) // optional version with debug flag
+    public void runOpMode(BooleanObject bSuspend) // optional version with debug flag
     {
         runOpMode();
     }

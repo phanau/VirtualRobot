@@ -27,6 +27,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+class BooleanObject {
+    BooleanObject(boolean initial) { value = initial; }
+    public boolean value;
+}
+
 /**
  * Controller class for the robot simulation.
  */
@@ -83,7 +88,7 @@ public class VirtualRobotController {
     };
 
     //Debug controls
-    private boolean bSuspend = false;        // debug flag
+    private BooleanObject bSuspend;        // debug flag that can be updated after being passed around
 
     public void initialize() {
         LinearOpMode.setVirtualRobotController(this);
@@ -104,6 +109,7 @@ public class VirtualRobotController {
         imgViewBackground.setImage(backgroundImage);
         sldRandomMotorError.valueProperty().addListener(sliderChangeListener);
         sldSystematicMotorError.valueProperty().addListener(sliderChangeListener);
+        bSuspend = new BooleanObject(false);
     }
 
     @FXML
@@ -127,8 +133,8 @@ public class VirtualRobotController {
 
     @FXML
     private void handleDebugButtonAction(ActionEvent event) {
-        bSuspend = !bSuspend;
-        debugButton.setText(bSuspend ? "RESUME" : "PAUSE");
+        bSuspend.value = !bSuspend.value;
+        debugButton.setText(bSuspend.value ? "RESUME" : "PAUSE");
     }
 
     @FXML
@@ -150,7 +156,7 @@ public class VirtualRobotController {
             final Runnable updateDisplay = new Runnable() {
                 @Override
                 public void run() {
-                    if (!bSuspend) {
+                    if (!bSuspend.value) {
                         bot.updateDisplay();
                         updateTelemetryDisplay();
                     }
@@ -159,7 +165,7 @@ public class VirtualRobotController {
             Runnable singleCycle = new Runnable() {
                 @Override
                 public void run() {
-                    if (!bSuspend) {
+                    if (!bSuspend.value) {
                         gamePad.update();
                         bot.updateStateAndSensors(TIMER_INTERVAL_MILLISECONDS);
                         Platform.runLater(updateDisplay);
@@ -192,7 +198,7 @@ public class VirtualRobotController {
         }
     }
 
-    private void runOpModeAndCleanUp(boolean bSuspend){
+    private void runOpModeAndCleanUp(BooleanObject bSuspend){
         opMode.runOpMode(bSuspend);
         bot.powerDownAndReset();
         if (!executorService.isShutdown()) executorService.shutdown();

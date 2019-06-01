@@ -30,21 +30,13 @@ public class OpMode extends LinearOpMode {
         stop();
     }
 
-    public void runOpMode(boolean bSuspend)
+    public void runOpMode(BooleanObject bSuspend)
     {
         init();
         telemetry.update();
         waitForStart();
         while (opModeIsActive()) {
-            if (bSuspend) {
-                try{
-                    Thread.sleep(0);
-                } catch (InterruptedException exc){
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-            }
-            else {
+            if (!bSuspend.value) {
                 loop();
                 telemetry.update();
             }

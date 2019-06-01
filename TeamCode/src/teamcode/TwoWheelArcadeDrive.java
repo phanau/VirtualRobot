@@ -12,6 +12,9 @@ public class TwoWheelArcadeDrive extends LinearOpMode {
         DcMotor left = hardwareMap.dcMotor.get("left_motor");
         DcMotor right = hardwareMap.dcMotor.get("right_motor");
         left.setDirection(DcMotor.Direction.REVERSE);
+        telemetry.addData("Use left joystick,","");
+        telemetry.addData("X-left/right","");
+        telemetry.addData("Y-forward/backward","");
         telemetry.addData("Press Start When Ready","");
         telemetry.update();
         waitForStart();

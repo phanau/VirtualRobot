@@ -251,6 +251,7 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
 
         // post instructions to console
         telemetry.addData("PosIntDriveTestOp", "");
+        telemetry.addData("requires Meccanum or X-drive", "");
         telemetry.addData("", "autonomous point to point");
         telemetry.addData("", "navigation using PositionIntegrator");
         telemetry.addData("", "driven by motor encoders");

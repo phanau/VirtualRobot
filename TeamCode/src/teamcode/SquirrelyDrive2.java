@@ -67,6 +67,9 @@ public class SquirrelyDrive2 extends OpMode {
 		rh = new RobotHardware();
 		rh.init(this);
 
+		telemetry.addData("Squirrely (Meccanum/X-drive) ", "");
+		telemetry.addData("standard tank drive (two sticks)", "");
+		telemetry.addData("plus sideways slide on both sticks", "");
 	}
 
 

@@ -67,6 +67,8 @@ public class TankDrive1 extends OpMode {
 		rh = new RobotHardware();
 		rh.init(this);
 
+		telemetry.addData("Tank drive - two sticks Y", "");
+		telemetry.addData("Press Start When Ready", "");
 	}
 
 	/*
@@ -108,7 +110,7 @@ public class TankDrive1 extends OpMode {
 		telemetry.addData("Text", "*** Test v1.0 ***");
 		telemetry.addData("left pwr", String.format("%.2f", left));
 		telemetry.addData("right pwr", String.format("%.2f", right));
-		telemetry.addData("gamepad1", gamepad1);
+		//telemetry.addData("gamepad1", gamepad1);
 		//telemetry.addData("gamepad2", gamepad2);
 	}
 

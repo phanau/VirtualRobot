@@ -49,8 +49,11 @@ public class SquirrelyGyroDriveTestOp extends OpMode {
         boolean isXdrive = (this.virtualBot.getClass() == XDriveBot.class);  // handle X-drive too ...
         if (isXdrive)
             leg /= Math.sqrt(2);   // each wheel rotation moves the bot further with X-drive
-        
+
         SensorLib.PID pid = null;         // use default PID provided by the step
+
+        // move to better starting position (assume we start at the center of the field)
+        mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this, 180, 0, mGyro, pid, mMotors, power, leg/2, false));
 
         // drive a square while maintaining constant orientation (0)
         mSequence.add(new AutoLib.SquirrelyGyroTimedDriveStep(this, -90, 0, mGyro, pid, mMotors, power, leg/2, false));
@@ -76,6 +79,11 @@ public class SquirrelyGyroDriveTestOp extends OpMode {
 
         // start out not-done
         bDone = false;
+
+        telemetry.addData("Autonomous test of Meccanum/X-drive", "");
+        telemetry.addData("using SquirrelyGyroTimedDriveSteps", "");
+        telemetry.addData("navigate square/diamond/circle", "");
+
     }
 
     @Override

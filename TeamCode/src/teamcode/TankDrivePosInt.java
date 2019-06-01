@@ -84,6 +84,11 @@ public class TankDrivePosInt extends OpMode {
 		bFirstLoop = true;
 		mEncoderMotor = rh.mMotors;
 		mEncoderPrev = new int[4];
+
+		telemetry.addData("Normal tank drive", "");
+		telemetry.addData("with telemetry reporting of position", "");
+		telemetry.addData("from encoder-driven PositionIntegrator", "");
+
 	}
 
 	/*
@@ -151,7 +156,7 @@ public class TankDrivePosInt extends OpMode {
 		telemetry.addData("Test", "*** Position Integration ***");
 		telemetry.addData("left pwr", String.format("%.2f", left));
 		telemetry.addData("right pwr", String.format("%.2f", right));
-		telemetry.addData("gamepad1", gamepad1);
+		//telemetry.addData("gamepad1", gamepad1);
 		//telemetry.addData("gamepad2", gamepad2);
 		telemetry.addData("position", String.format("%.2f", mPosInt.getX())+", " + String.format("%.2f", mPosInt.getY()));
 	}

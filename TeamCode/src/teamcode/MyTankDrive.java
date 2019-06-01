@@ -58,6 +58,8 @@ public class MyTankDrive extends OpMode {
 
         colorSensor = hardwareMap.colorSensor.get("color_sensor");
 
+        telemetry.addData("Tank drive - two sticks Y", "");
+        telemetry.addData("plus left/right slide on X", "");
         telemetry.addData("Press Start When Ready", "");
     }
 

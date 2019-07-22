@@ -77,6 +77,9 @@ public class  AbsoluteGyroDrive1 extends OpMode {
 
 		// create a Step that we will use in teleop mode
 		mStep = new AutoLib.AzimuthTimedDriveStep(this, initialHeading, rh.mIMU, null, rh.mMotors, 0, 1.0f,10000, false);
+
+		// tell AutoLib about this client OpMode
+		AutoLib.mOpMode = this;
 	}
 
 

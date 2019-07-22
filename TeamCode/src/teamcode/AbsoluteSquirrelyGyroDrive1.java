@@ -79,6 +79,9 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 
 		// create a Step that we will use in teleop mode
 		mStep = new AutoLib.SquirrelyGyroTimedDriveStep(this, 0, initialHeading, rh.mIMU, null, rh.mMotors, 0, 10000, false);
+
+		// tell AutoLib about this client OpMode
+		AutoLib.mOpMode = this;
 	}
 
 

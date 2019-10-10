@@ -289,13 +289,14 @@ public class SkystoneAutoBlue1 extends OpMode {
         // add a bunch of position integrator "legs" to the sequence -- uses absolute field coordinate system
         // corresponding to Vuforia convention of +X to the rear and +Y to the Blue side
         // Vuforia convention is bearing zero = +X while our code uses bearing zero = +Y, so there's an offset
-        final float boff = -90;
+        final float boff = -90;  // bearing offset of our convention (+Y to rear of field) vs. Vuforia's (+Y to Blue side)
+        // coordinates and bearings below are in Vuforia terms to be compatible with Vuforia position updates if we use them.
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, -48, 36, 0., 0), -90+boff, tol, false));
+                new Position(DistanceUnit.INCH, -44, 32, 0., 0), -90+boff, tol, false));
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 48, 0., 0), 0+boff, tol, false));
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 48, 36, 0., 0), -90+boff, tol, false));
+                new Position(DistanceUnit.INCH, 48, 32, 0., 0), -90+boff, tol, false));
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 48, 62, 0., 0), -90+boff, tol, false));
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,

@@ -37,6 +37,8 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
         int mCountsPerRev;
         double mWheelDiam;
 
+        boolean mIsXdrive = false;
+
         public EncoderGyroPosInt(OpMode opmode, HeadingSensor gyro, DcMotor[] encoderMotor, int countsPerRev, double wheelDiam, Position initialPosn)
         {
             super(initialPosn);
@@ -48,6 +50,8 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
             mWheelDiam = wheelDiam;
             mEncoderPrev = new int[encoderMotor.length];
         }
+
+        public void setIsXdrive(boolean x) { mIsXdrive = x; }
 
         public boolean loop() {
             // get initial encoder values
@@ -84,8 +88,7 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
             double dxR = robotDeltaPos[0];
             double dyR = robotDeltaPos[1];
 
-            boolean isXdrive = (mOpMode.virtualBot.getClass() == XDriveBot.class);  // handle X-drive too ...
-            if (isXdrive) {
+            if (mIsXdrive) {
                 dxR *= Math.sqrt(2);   // each wheel rotation moves the bot further with X-drive
                 dyR *= Math.sqrt(2);   // each wheel rotation moves the bot further with X-drive
             }
@@ -273,8 +276,8 @@ public class SquirrelyPosIntDriveTestOp extends OpMode {
         Position initialPosn = new Position(DistanceUnit.INCH, 0.0, 0.0, 0.0, 0);
         // example starting position: at origin of field
         mPosInt = new EncoderGyroPosInt(this, rh.mIMU, rh.mMotors, countsPerRev, wheelDiam, initialPosn);
-
-
+        mPosInt.setIsXdrive(this.virtualBot.getClass() == XDriveBot.class);  // handle X-drive too ...
+        
         // create an autonomous sequence with the steps to drive
         // several legs of a polygonal course ---
         float movePower = 1.0f;

@@ -5,6 +5,7 @@ import virtual_robot.hardware.DistanceSensor;
 import virtual_robot.hardware.Gamepad;
 import virtual_robot.hardware.GyroSensor;
 //import virtual_robot.hardware.UltrasonicSensor;
+import virtual_robot.hardware.DcMotor;
 
 import virtual_robot.util.navigation.DistanceUnit;
 import virtual_robot.util.navigation.Position;
@@ -301,6 +302,125 @@ public class SensorLib {
         // get the current position
         public double getX() { return mPosition.x; }
         public double getY() { return mPosition.y; }
+        public double getZ() { return mPosition.z; }
         public Position getPosition() { return mPosition; }
+
+        // set the current position (presumably from some other reliable source)
+        public void setPosition(Position position) { mPosition = position; }
+        public void setPosition(VectorF pos) {
+            final float MMPERINCH = 25.4f;   // assume update position is from Vuforia (VectorF in mm)
+            mPosition = new Position(DistanceUnit.INCH, pos.get(0)/MMPERINCH, pos.get(1)/MMPERINCH, pos.get(2)/MMPERINCH, 0);
+        }
+        // update current position by mixing current position with given position at given weight
+        public void setPosition(VectorF pos, float weight) {
+            final float MMPERINCH = 25.4f;   // assume update position is from Vuforia (VectorF in mm)
+            mPosition = new Position(DistanceUnit.INCH,
+                    (1-weight)*getX()+weight*(pos.get(0)/MMPERINCH),
+                    (1-weight)*getY()+weight*(pos.get(1)/MMPERINCH),
+                    (1-weight)*getZ()+weight*(pos.get(2)/MMPERINCH), 0);
+        }
     }
+
+    // use a set of motor encoders and gyro to track absolute field position --
+    // this version supports normal, Mecanum and X-drives
+    // assumes motors in order fr, br, fl, bl
+    public static class EncoderGyroPosInt extends SensorLib.PositionIntegrator {
+        OpMode mOpMode;
+        HeadingSensor mGyro;
+        DcMotor[] mEncoderMotors;    // set of motors whose encoders we will average to get net movement
+
+        int mEncoderPrev[];		// previous readings of motor encoders
+        boolean mFirstLoop;
+
+        int mCountsPerRev;
+        double mWheelDiam;
+
+        public enum DriveType { NORMAL, MECANUM, XDRIVE };
+        DriveType mDriveType = DriveType.NORMAL;
+
+        // transform from wheel distance to robot movement for various drive types
+        double mTWR[][];
+
+        final double tWR_Normal[][] = new double[][] {
+                {0.25, 0.25, 0.25, 0.25},
+                {0.25, 0.25, 0.25, 0.25}
+        };
+
+        final double tWR_Mecanum[][] = new double[][] {
+                {0.25, -0.25, 0.25, -0.25},
+                {0.25, 0.25, 0.25, 0.25}
+        };
+
+        final double sqrt2 = Math.sqrt(2);
+        final double tWR_XDrive[][] = new double[][] {
+                {0.25*sqrt2, -0.25*sqrt2, 0.25*sqrt2, -0.25*sqrt2},
+                {0.25*sqrt2, 0.25*sqrt2, 0.25*sqrt2, 0.25*sqrt2}
+        };
+
+        public EncoderGyroPosInt(DriveType type, OpMode opmode, HeadingSensor gyro, DcMotor[] encoderMotors, int countsPerRev, double wheelDiam, Position initialPosn)
+        {
+            super(initialPosn);
+            mDriveType = type;
+            switch (mDriveType) {
+                case NORMAL:  mTWR = tWR_Normal; break;
+                case MECANUM: mTWR = tWR_Mecanum; break;
+                case XDRIVE:  mTWR = tWR_XDrive; break;
+            }
+            mOpMode = opmode;
+            mGyro = gyro;
+            mEncoderMotors = encoderMotors;
+            mFirstLoop = true;
+            mCountsPerRev = countsPerRev;
+            mWheelDiam = wheelDiam;
+            mEncoderPrev = new int[encoderMotors.length];
+        }
+
+        public boolean loop() {
+            // get initial encoder value
+            if (mFirstLoop) {
+                for (int i=0; i<mEncoderMotors.length; i++)
+                    mEncoderPrev[i] = mEncoderMotors[i].getCurrentPosition();
+                mFirstLoop = false;
+            }
+
+            // get current encoder values and compute deltas since last read
+            int encoderDist[] = new int[4];
+            for (int i=0; i<mEncoderMotors.length; i++) {
+                int encoder = mEncoderMotors[i].getCurrentPosition();
+                encoderDist[i] = encoder - mEncoderPrev[i];
+                mEncoderPrev[i] = mEncoderMotors[i].getCurrentPosition();
+            }
+
+            // compute physical distance each wheel thinks it moved
+            double dist[] = new double[4];
+            for (int i=0; i<4; i++)
+                dist[i] = (encoderDist[i] * mWheelDiam * Math.PI)/mCountsPerRev;
+
+            // compute robot motion in relative x (across) and y(along) directions for Mecanum or X-drive
+            double[] robotDeltaPos = new double[] {0,0};
+            for (int i=0; i<2; i++){
+                for (int j = 0; j<4; j++){
+                    robotDeltaPos[i] += mTWR[i][j] * dist[j];
+                }
+            }
+            double dxR = robotDeltaPos[0];
+            double dyR = robotDeltaPos[1];
+
+            // get bearing from IMU gyro
+            double imuBearingDeg = mGyro.getHeading();
+
+            // update accumulated field position
+            this.move(dxR, dyR, imuBearingDeg);
+            if (mOpMode != null) {
+                mOpMode.telemetry.addData("EGPI position", String.format("%.2f", this.getX()) + ", " + String.format("%.2f", this.getY()));
+            }
+
+            return true;
+        }
+
+        public HeadingSensor getGyro() {
+            return mGyro;
+        }
+    }
+
 }

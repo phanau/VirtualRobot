@@ -1,5 +1,6 @@
 package teamcode;
 
+import virtual_robot.controller.MechanumBot;
 import virtual_robot.controller.OpMode;
 import virtual_robot.controller.XDriveBot;
 import virtual_robot.hardware.DcMotor;
@@ -23,92 +24,6 @@ import java.util.ArrayList;
 //@Autonomous(name="Test: Pos Int Drive Test", group ="Test")
 //@Disabled
 public class SkystoneAutoBlue1 extends OpMode {
-
-    // use motor encoders and gyro to track absolute field position ---
-    // this version accounts for cross-wise motion of Meccanum or X-drive wheels
-    class EncoderGyroPosInt extends SensorLib.PositionIntegrator {
-        OpMode mOpMode;
-        HeadingSensor mGyro;
-        DcMotor[] mEncoderMotor;
-
-        int mEncoderPrev[];		// previous readings of motor encoders
-        boolean mFirstLoop;
-
-        int mCountsPerRev;
-        double mWheelDiam;
-
-        public EncoderGyroPosInt(OpMode opmode, HeadingSensor gyro, DcMotor[] encoderMotor, int countsPerRev, double wheelDiam, Position initialPosn)
-        {
-            super(initialPosn);
-            mOpMode = opmode;
-            mGyro = gyro;
-            mEncoderMotor = encoderMotor;
-            mFirstLoop = true;
-            mCountsPerRev = countsPerRev;
-            mWheelDiam = wheelDiam;
-            mEncoderPrev = new int[encoderMotor.length];
-        }
-
-        public boolean loop() {
-            // get initial encoder values
-            if (mFirstLoop) {
-                for (int i=0; i<mEncoderMotor.length; i++)
-                    mEncoderPrev[i] = mEncoderMotor[i].getCurrentPosition();
-                mFirstLoop = false;
-            }
-
-            // get current encoder values and compute deltas since last read
-            int encoderDist[] = new int[4];
-            for (int i=0; i<mEncoderMotor.length; i++) {
-                int encoder = mEncoderMotor[i].getCurrentPosition();
-                encoderDist[i] = encoder - mEncoderPrev[i];
-                mEncoderPrev[i] = mEncoderMotor[i].getCurrentPosition();
-            }
-
-            // compute physical distance each wheel thinks it moved
-            double dist[] = new double[4];
-            for (int i=0; i<4; i++)
-                dist[i] = (encoderDist[i] * mWheelDiam * Math.PI)/mCountsPerRev;
-
-            // compute robot motion in relative x (across) and y(along) directions for Meccanum/X-drive
-            double[] robotDeltaPos = new double[] {0,0};
-            double tWR[][] = new double[][] {
-                    {0.25, -0.25, 0.25, -0.25},
-                    {0.25, 0.25, 0.25, 0.25}
-            };
-            for (int i=0; i<2; i++){
-                for (int j = 0; j<4; j++){
-                    robotDeltaPos[i] += tWR[i][j] * dist[j];
-                }
-            }
-            double dxR = robotDeltaPos[0];
-            double dyR = robotDeltaPos[1];
-
-            boolean isXdrive = (mOpMode.virtualBot.getClass() == XDriveBot.class);  // handle X-drive too ...
-            if (isXdrive) {
-                dxR *= Math.sqrt(2);   // each wheel rotation moves the bot further with X-drive
-                dyR *= Math.sqrt(2);   // each wheel rotation moves the bot further with X-drive
-            }
-
-            // get bearing from IMU gyro
-            double imuBearingDeg = mGyro.getHeading();
-
-            // update accumulated field position
-            this.move(dxR, dyR, imuBearingDeg);
-
-            if (mOpMode != null) {
-                mOpMode.telemetry.addData("EGPI position", String.format("%.2f", this.getX()) + ", " + String.format("%.2f", this.getY()));
-                Position simPos = mOpMode.virtualBot.getPosition();     // get the "actual" position from the VirtualBot to see how well our PosInt is tracking ...
-                mOpMode.telemetry.addData("Vbot position", String.format("%.2f", simPos.x) + ", " + String.format("%.2f", simPos.y));
-            }
-
-            return true;
-        }
-
-        public HeadingSensor getGyro() {
-            return mGyro;
-        }
-    }
 
     // return done when we're within tolerance distance of target position
     class PositionTerminatorStep extends AutoLib.MotorGuideStep {
@@ -156,14 +71,14 @@ public class SkystoneAutoBlue1 extends OpMode {
 
         OpMode mOpMode;
         Position mTarget;
-        EncoderGyroPosInt mPosInt;
+        SensorLib.EncoderGyroPosInt mPosInt;
         double mTol;
         float mMaxPower;
         float mMinPower = 0.25f;
         float mSgnPower;
 
-        public SqGyroPosIntGuideStep(EncoderGyroPosInt posInt, Position target, float heading,
-                                   SensorLib.PID pid, ArrayList<AutoLib.SetPower> motorsteps, float power, double tol) {
+        public SqGyroPosIntGuideStep(SensorLib.EncoderGyroPosInt posInt, Position target, float heading,
+                                     SensorLib.PID pid, ArrayList<AutoLib.SetPower> motorsteps, float power, double tol) {
             // this.preAdd(new SquirrelyGyroGuideStep(mode, direction, heading, gyro, pid, steps, power));
             super(0, heading, posInt.getGyro(), pid, motorsteps, power);
             mOpMode = AutoLib.mOpMode;
@@ -212,12 +127,12 @@ public class SkystoneAutoBlue1 extends OpMode {
     // Step: drive to given absolute field position while facing in the given direction using given EncoderGyroPosInt
     class SqPosIntDriveToStep extends AutoLib.GuidedTerminatedDriveStep {
 
-        EncoderGyroPosInt mPosInt;
+        SensorLib.EncoderGyroPosInt mPosInt;
         Position mTarget;
         AutoLib.GyroGuideStep mGuideStep;
         PositionTerminatorStep mTerminatorStep;
 
-        public SqPosIntDriveToStep(EncoderGyroPosInt posInt, DcMotor[] motors,
+        public SqPosIntDriveToStep(SensorLib.EncoderGyroPosInt posInt, DcMotor[] motors,
                                  float power, SensorLib.PID pid, Position target, float heading, double tolerance, boolean stop)
         {
             super(new SqGyroPosIntGuideStep(posInt, target, heading, pid, null, power, tolerance),
@@ -236,7 +151,7 @@ public class SkystoneAutoBlue1 extends OpMode {
     boolean bDone;                          // true when the programmed sequence is done
     boolean bSetup;                         // true when we're in "setup mode" where joysticks tweak parameters
     SensorLib.PID mPid;                     // PID controller for the sequence
-    EncoderGyroPosInt mPosInt;              // Encoder/gyro-based position integrator to keep track of where we are
+    SensorLib.EncoderGyroPosInt mPosInt;    // Encoder/gyro-based position integrator to keep track of where we are
     SensorLib.PIDAdjuster mPidAdjuster;     // for interactive adjustment of PID parameters
     RobotHardware rh;                       // standard hardware set for these tests
 
@@ -274,7 +189,11 @@ public class SkystoneAutoBlue1 extends OpMode {
         // initial position and orientation of bot is along Blue wall near the red loading zone facing the Red side
         rh.mIMU.setHeadingOffset(180);  // initially bot is facing in (Vuforia) field -Y direction, where (for us) +Y is bearing zero
         Position initialPosn = new Position(DistanceUnit.INCH, -36.0, 63.0, 0.0, 0);
-        mPosInt = new EncoderGyroPosInt(this, rh.mIMU, rh.mMotors, countsPerRev, wheelDiam, initialPosn);
+        SensorLib.EncoderGyroPosInt.DriveType dt =
+                (this.virtualBot.getClass() == XDriveBot.class) ? SensorLib.EncoderGyroPosInt.DriveType.XDRIVE :
+                        (this.virtualBot.getClass() == MechanumBot.class) ? SensorLib.EncoderGyroPosInt.DriveType.MECANUM :
+                                SensorLib.EncoderGyroPosInt.DriveType.NORMAL;  // handle X-drive too ...
+        mPosInt = new SensorLib.EncoderGyroPosInt(dt,this, rh.mIMU, rh.mMotors, countsPerRev, wheelDiam, initialPosn);
 
 
         // create an autonomous sequence with the steps to drive

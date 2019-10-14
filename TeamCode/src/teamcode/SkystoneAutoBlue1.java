@@ -210,19 +210,47 @@ public class SkystoneAutoBlue1 extends OpMode {
         // Vuforia convention is bearing zero = +X while our code uses bearing zero = +Y, so there's an offset
         final float boff = -90;  // bearing offset of our convention (+Y to rear of field) vs. Vuforia's (+Y to Blue side)
         // coordinates and bearings below are in Vuforia terms to be compatible with Vuforia position updates if we use them.
+
+        // fetch a SkyStone (for now we assume we know where it is) and pull it out of line
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, -44, 32, 0., 0), -90+boff, tol, false));
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 0, 48, 0., 0), 0+boff, tol, false));
+                new Position(DistanceUnit.INCH, -44, 40, 0., 0), -90+boff, tol, false));
+
+        // go to the Blue Skybridge
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, 0, 48, 0., 0), -90+boff, tol, false));
+
+        // go to the Blue Foundation and pull it into the Blue Building Area
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 48, 32, 0., 0), -90+boff, tol, false));
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 48, 62, 0., 0), -90+boff, tol, false));
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 62, 0., 0), -90+boff, tol, false));
+
+        // slide out of the corridor left by positioning the Foundation
         mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 48, 0., 0), -90+boff, tol, true));
-        mSequence.add(new AutoLib.MoveByTimeStep(rh.mMotors, 0, 0, true));     // stop all motors
+
+        // return to the quarry for a second SkyStone
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, -60, 32, 0., 0), -90+boff, tol, false));
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, -60, 40, 0., 0), -90+boff, tol, false));
+
+        // bring it to the audience end of the Foundation via the Blue Skybridge
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, 0, 48, 0., 0), -90+boff, tol, false));
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, 24, 60, 0., 0), 0+boff, tol, false));
+
+        // park under the SkyBridge
+        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, 0, 48, 0., 0), 0+boff, tol, false));
+
+        // stop all motors
+        mSequence.add(new AutoLib.MoveByTimeStep(rh.mMotors, 0, 0, true));
 
         // start out not-done
         bDone = false;

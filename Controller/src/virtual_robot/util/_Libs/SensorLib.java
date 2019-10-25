@@ -342,7 +342,7 @@ public class SensorLib {
         double mTWR[][];
 
         final double tWR_Normal[][] = new double[][] {
-                {0.25, 0.25, 0.25, 0.25},
+                {0, 0, 0, 0},
                 {0.25, 0.25, 0.25, 0.25}
         };
 

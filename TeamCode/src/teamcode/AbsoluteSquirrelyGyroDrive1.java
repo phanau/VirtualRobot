@@ -36,6 +36,7 @@ import virtual_robot.hardware.DcMotor;
 import virtual_robot.hardware.bno055.BNO055IMU;
 import virtual_robot.util._Libs.BNO055IMUHeadingSensor;
 import virtual_robot.util._Libs.AutoLib;
+import virtual_robot.util._Libs.ToggleButton;
 
 /*
  * TeleOp Mode
@@ -51,6 +52,8 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 
 	AutoLib.SquirrelyGyroTimedDriveStep mStep;
 	RobotHardware rh;
+	ToggleButton lb;
+	ToggleButton rb;
 
 	/**
 	 * Constructor
@@ -82,6 +85,10 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 
 		// tell AutoLib about this client OpMode
 		AutoLib.mOpMode = this;
+
+		// initialize toggle buttons that will count gyro angle correction offset using lb and rb buttons on gamepad
+		lb = new ToggleButton(false,360, 0);
+		rb = new ToggleButton(false, 360, 0);
 	}
 
 
@@ -92,6 +99,11 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 	 */
 	@Override
 	public void loop() {
+
+		// process gyro correction inputs on lb and rb buttons
+		lb.process(gamepad1.left_bumper);
+		rb.process(gamepad1.right_bumper);
+		rh.mIMU.setHeadingOffset(rb.value()-lb.value());
 
 		// motion direction is on the right stick
 		float dx = gamepad1.right_stick_x;

@@ -69,5 +69,33 @@ public class Gamepad {
         controllers.quitSDLGamepad();
     }
 
+    /**
+     * Display a summary of this gamepad, including the state of all buttons, analog sticks, and triggers
+     * @return a summary
+     */
+    @Override
+    public String toString() {
+        String buttons = new String();
+        if (dpad_up) buttons += "dpad_up ";
+        if (dpad_down) buttons += "dpad_down ";
+        if (dpad_left) buttons += "dpad_left ";
+        if (dpad_right) buttons += "dpad_right ";
+        if (a) buttons += "a ";
+        if (b) buttons += "b ";
+        if (x) buttons += "x ";
+        if (y) buttons += "y ";
+        if (guide) buttons += "guide ";
+        if (start) buttons += "start ";
+        if (back) buttons += "back ";
+        if (left_bumper) buttons += "left_bumper ";
+        if (right_bumper) buttons += "right_bumper ";
+        if (left_stick_button) buttons += "left stick button ";
+        if (right_stick_button) buttons += "right stick button ";
+
+        return String.format("\nlx: % 1.2f ly: % 1.2f \nrx: % 1.2f ry: % 1.2f \nlt: %1.2f rt: %1.2f %s",
+                left_stick_x, left_stick_y,
+                right_stick_x, right_stick_y, left_trigger, right_trigger, buttons);
+    }
+
 }
 

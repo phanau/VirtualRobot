@@ -51,7 +51,7 @@ public class XDriveBot extends VirtualBot {
         backServoArm.getTransforms().add(new Rotate(0, 37.5, 67.5));
 
         tWR = new double[][] {
-                {-0.25*sqrt2, 0.25*sqrt2, 0.25*sqrt2, -0.25*sqrt2},     // seems like they had Meccanum wheels mounted backwards ???
+                {-0.25*sqrt2, 0.25*sqrt2, -0.25*sqrt2, 0.25*sqrt2},
                 {0.25*sqrt2, 0.25*sqrt2, 0.25*sqrt2, 0.25*sqrt2},
                 {-0.25/ wheelBaseRadius, -0.25/ wheelBaseRadius, 0.25/ wheelBaseRadius, 0.25/ wheelBaseRadius},
                 {-0.25, 0.25, 0.25, -0.25}

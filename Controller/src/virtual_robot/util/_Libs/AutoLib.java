@@ -1151,11 +1151,12 @@ public class AutoLib {
             // calculate relative front/back motor powers for fancy wheels to move us in requested relative direction
             AutoLib.MotorPowers mp = AutoLib.GetSquirrelyWheelMotorPowers(relDir);
 
-            // calculate powers of the 4 motors
-            double pFR = mp.Front() * mPower - hdCorr;
-            double pBR = mp.Back() * mPower - hdCorr;
-            double pFL = mp.Front() * mPower + hdCorr;
-            double pBL = mp.Back() * mPower + hdCorr;
+            // calculate powers of the 4 motors ---
+            // for "standard" mecanum wheel arrangement (i.e. all roller axles pointing to bot center)
+            double pFR = mp.LeftFacing() * mPower - hdCorr;
+            double pBR = mp.RightFacing() * mPower - hdCorr;
+            double pFL = mp.RightFacing() * mPower + hdCorr;
+            double pBL = mp.LeftFacing() * mPower + hdCorr;
 
             // normalize powers so none has magnitude > maxPower
             double norm = normalize(mMaxPower, pFR, pBR, pFL, pBL);
@@ -1170,13 +1171,8 @@ public class AutoLib {
             // log some data
             if (mOpMode != null) {
                 mOpMode.telemetry.addData("heading ", heading);
-                mOpMode.telemetry.addData("front power ", mp.Front());
-                mOpMode.telemetry.addData("back power ", mp.Back());
-                mOpMode.telemetry.addData("mPower ", mPower);
-                mOpMode.telemetry.addData("fr power ", pFR);
-                mOpMode.telemetry.addData("br power ", pBR);
-                mOpMode.telemetry.addData("fl power ", pFL);
-                mOpMode.telemetry.addData("bl power ", pBL);
+                mOpMode.telemetry.addData("right-facing power ", mp.RightFacing());
+                mOpMode.telemetry.addData("left-facing power ", mp.LeftFacing());
             }
 
             // guidance step always returns "done" so the CS in which it is embedded completes when
@@ -1689,18 +1685,22 @@ public class AutoLib {
 
     // example of a class used to return multiple values from a function call
     public static class MotorPowers {
-        public double mFront;
-        public double mBack;
+        double mFront;
+        double mBack;
+
         public MotorPowers(double front, double back) {
             mFront = front;
             mBack = back;
         }
-        public double Front() { return mFront; }
-        public double Back() { return mBack; }
+        public double RightFacing() { return mFront; }
+        public double LeftFacing() { return mBack; }
     }
 
     // this function computes the relative front/back power settings needed to move along a given
     // heading, relative to the current orientation of the robot.
+    // for "standard" mecanum wheel arrangement (i.e. all roller axles pointing to bot center)
+    // i.e. "Front" (left) is a wheel whose rollers point to the right on the top of the wheel, while
+    // "Back" (left) refers to a wheel whose rollers point to the left on the top of the wheel.
     public static MotorPowers GetSquirrelyWheelMotorPowers(
             double heading    // in degrees, zero = straight ahead, positive CCW, range +-180
     )
@@ -1773,13 +1773,13 @@ public class AutoLib {
 
             // create TimedMotorSteps to control the 4 motors
             if (fr != null)
-                this.add(new TimedMotorStep(fr, mp.Front()*power, seconds, stop));
+                this.add(new TimedMotorStep(fr, mp.LeftFacing()*power, seconds, stop));
             if (br != null)
-                this.add(new TimedMotorStep(br, mp.Back()*power, seconds, stop));
+                this.add(new TimedMotorStep(br, mp.RightFacing()*power, seconds, stop));
             if (fl != null)
-                this.add(new TimedMotorStep(fl, mp.Front()*power, seconds, stop));
+                this.add(new TimedMotorStep(fl, mp.RightFacing()*power, seconds, stop));
             if (bl != null)
-                this.add(new TimedMotorStep(bl, mp.Back()*power, seconds, stop));
+                this.add(new TimedMotorStep(bl, mp.LeftFacing()*power, seconds, stop));
         }
     }
 

@@ -96,12 +96,14 @@ public class PosIntDriveTestOp extends OpMode {
         Position mTarget;
         double mTol;
         double mPrevDist;
+        DcMotor[] mMotors;
 
-        public PositionTerminatorStep(SensorLib.PositionIntegrator posInt, Position target, double tol) {
+        public PositionTerminatorStep(SensorLib.PositionIntegrator posInt, Position target, double tol, DcMotor[] motors) {
             mOpMode = AutoLib.mOpMode;
             mPosInt = posInt;
             mTarget = target;
             mTol = tol;
+            mMotors = motors;
             mPrevDist = 1e6;    // infinity
         }
 
@@ -124,6 +126,13 @@ public class PosIntDriveTestOp extends OpMode {
             if (dist < mTol*4 && dist > mPrevDist)
                 bDone = true;
             mPrevDist = dist;
+
+            // optionally stop the motors when we're done
+            if (bDone && mMotors != null) {
+                for (DcMotor m : mMotors) {
+                    m.setPower(0);
+                }
+            }
 
             return bDone;
         }
@@ -197,7 +206,7 @@ public class PosIntDriveTestOp extends OpMode {
                                  float power, SensorLib.PID pid, Position target, double tolerance, boolean stop)
         {
             super(new GyroPosIntGuideStep(posInt, target, pid, null, power, tolerance),
-                    new PositionTerminatorStep(posInt, target, tolerance),
+                    new PositionTerminatorStep(posInt, target, tolerance, stop ? motors : null),
                     motors);
 
             mPosInt = posInt;
@@ -270,10 +279,12 @@ public class PosIntDriveTestOp extends OpMode {
                 new Position(DistanceUnit.INCH, 36, 36, 0., 0), tol, false));
         mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,                   // do this move backwards!
                 new Position(DistanceUnit.INCH, 36, 0, 0., 0), tol, false));
+        //mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
+        //        new Position(DistanceUnit.INCH, -48, -48, 0., 0), tol, false));
         mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, -48, -48, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, false));
+                new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, true));
+
+        mSequence.add(new AutoLib.LogTimeStep("stopped", 3));
 
         mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 36, 0., 0), tol, false));
@@ -281,10 +292,12 @@ public class PosIntDriveTestOp extends OpMode {
                 new Position(DistanceUnit.INCH, 36, 36, 0., 0), tol, false));
         mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, -movePower, mPid,                   // do this move backwards!
                 new Position(DistanceUnit.INCH, 36, 0, 0., 0), tol, false));
-        mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, -movePower, mPid,                   // do this move backwards!
-                new Position(DistanceUnit.INCH, -48, -48, 0., 0), tol, false));
+        //mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, -movePower, mPid,                   // do this move backwards!
+        //        new Position(DistanceUnit.INCH, -48, -48, 0., 0), tol, false));
         mSequence.add(new PosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, false));
+                new Position(DistanceUnit.INCH, 0, 0, 0., 0), tol, true));
+
+        mSequence.add(new AutoLib.LogTimeStep("stopped", 3));
 
         // turn to heading zero to finish up
         mSequence.add(new AutoLib.AzimuthTolerancedTurnStep(0, rh.mIMU, mPid, rh.mMotors, turnPower, tol, 10));

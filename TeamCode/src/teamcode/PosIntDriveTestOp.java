@@ -248,7 +248,7 @@ public class PosIntDriveTestOp extends OpMode {
 
         // create a PID controller for the sequence
         // parameters of the PID controller for this sequence - assumes 20-gear motors (fast)
-        float Kp = 0.02f;        // motor power proportional term correction per degree of deviation
+        float Kp = 0.1f;        // motor power proportional term correction per degree of deviation
         float Ki = 0.025f;         // ... integrator term
         float Kd = 0;             // ... derivative term
         float KiCutoff = 10.0f;    // maximum angle error for which we update integrator

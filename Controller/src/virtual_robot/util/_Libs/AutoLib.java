@@ -1034,9 +1034,10 @@ public class AutoLib {
                 }
 
             // if there's a separate terminator step, tell it about the motor steps and add it to the sequence
+            // it needs to go BEFORE the motor steps so it can stop by zeroing the motor step power settings before they run.
             if (terminatorStep != null) {
                 terminatorStep.set(steps);
-                this.add(terminatorStep);
+                this.preAdd(terminatorStep);
             }
 
             // tell the guideStep about the motor Steps it should control

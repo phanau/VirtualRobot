@@ -96,15 +96,20 @@ public class PosIntDriveTestOp extends OpMode {
         Position mTarget;
         double mTol;
         double mPrevDist;
-        DcMotor[] mMotors;
+        boolean mStop;
+        ArrayList<AutoLib.SetPower> mMotorsteps;
 
-        public PositionTerminatorStep(SensorLib.PositionIntegrator posInt, Position target, double tol, DcMotor[] motors) {
+        public PositionTerminatorStep(SensorLib.PositionIntegrator posInt, Position target, double tol,  boolean stop) {
             mOpMode = AutoLib.mOpMode;
             mPosInt = posInt;
             mTarget = target;
             mTol = tol;
-            mMotors = motors;
+            mStop = stop;
             mPrevDist = 1e6;    // infinity
+        }
+
+        public void set(ArrayList<AutoLib.SetPower> motorsteps){
+            mMotorsteps = motorsteps;
         }
 
         @Override
@@ -128,8 +133,8 @@ public class PosIntDriveTestOp extends OpMode {
             mPrevDist = dist;
 
             // optionally stop the motors when we're done
-            if (bDone && mMotors != null) {
-                for (DcMotor m : mMotors) {
+            if (bDone && mStop) {
+                for (AutoLib.SetPower m : mMotorsteps) {
                     m.setPower(0);
                 }
             }
@@ -206,7 +211,7 @@ public class PosIntDriveTestOp extends OpMode {
                                  float power, SensorLib.PID pid, Position target, double tolerance, boolean stop)
         {
             super(new GyroPosIntGuideStep(posInt, target, pid, null, power, tolerance),
-                    new PositionTerminatorStep(posInt, target, tolerance, stop ? motors : null),
+                    new PositionTerminatorStep(posInt, target, tolerance, stop),
                     motors);
 
             mPosInt = posInt;

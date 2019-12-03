@@ -36,6 +36,7 @@ import virtual_robot.hardware.DcMotor;
 import virtual_robot.hardware.bno055.BNO055IMU;
 import virtual_robot.util._Libs.BNO055IMUHeadingSensor;
 import virtual_robot.util._Libs.AutoLib;
+import virtual_robot.util._Libs.SensorLib;
 import virtual_robot.util._Libs.ToggleButton;
 
 /*
@@ -80,8 +81,15 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 		telemetry.addData("right stick", " motion on field");
 		telemetry.addData("initial heading", initialHeading);
 
+		// construct a PID controller for correcting heading errors
+		final float Kp = 0.01f;        // degree heading proportional term correction per degree of deviation
+		final float Ki = 0.01f;        // ... integrator term
+		final float Kd = 0.0f;         // ... derivative term
+		final float KiCutoff = 3.0f;   // maximum angle error for which we update integrator
+		SensorLib.PID pid = new SensorLib.PID(Kp, Ki, Kd, KiCutoff);
+
 		// create a Step that we will use in teleop mode
-		mStep = new AutoLib.SquirrelyGyroTimedDriveStep(this, 0, initialHeading, rh.mIMU, null, rh.mMotors, 0, 10000, false);
+		mStep = new AutoLib.SquirrelyGyroTimedDriveStep(this, 0, initialHeading, rh.mIMU, pid, rh.mMotors, 0, 10000, false);
 
 		// tell AutoLib about this client OpMode
 		AutoLib.mOpMode = this;

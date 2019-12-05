@@ -174,10 +174,7 @@ public class SkystoneAutoBlue1 extends OpMode {
 
         public boolean loop() {
 
-            super.loop();
-            if (firstLoopCall()) {
-                mTarget.x = mCurrPos.x - 8;  // pretend we found the Stone nearest the audience
-            }
+            mTarget.x = mCurrPos.x - 8;  // pretend we found the Stone nearest the audience
 
             // run the base Step and return what it returns for "done" - i.e. have we timed out?
             // note that we're running this code AFTER trying to determine target with Vuforia data ...
@@ -304,7 +301,7 @@ public class SkystoneAutoBlue1 extends OpMode {
         mSequence.add(cs1);
 
         cs1.add(new FindSkystoneStep(this, lookLoc, skyLoc, 3.0f));         // look for SkyStone ...
-        cs1.add(new LogPosition(this, "skyLoc", skyLoc,3.0f));       // ... and report target position while searching
+        cs1.add(new LogPosition(this, "skyLoc", skyLoc,0.0f));       // ... and report target position while searching
 
         // drive to the SkyStone if we found it, otherwise to the default (middle) stone.
         mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid, skyLoc, -90 + boff, tol, true));

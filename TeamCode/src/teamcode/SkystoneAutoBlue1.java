@@ -33,13 +33,20 @@ public class SkystoneAutoBlue1 extends OpMode {
         Position mTarget;
         double mTol;
         double mPrevDist;
+        boolean mStop;
+        ArrayList<AutoLib.SetPower> mMotorsteps;
 
-        public PositionTerminatorStep(SensorLib.PositionIntegrator posInt, Position target, double tol) {
+        public PositionTerminatorStep(SensorLib.PositionIntegrator posInt, Position target, double tol,  boolean stop) {
             mOpMode = AutoLib.mOpMode;
             mPosInt = posInt;
             mTarget = target;
             mTol = tol;
+            mStop = stop;
             mPrevDist = 1e6;    // infinity
+        }
+
+        public void set(ArrayList<AutoLib.SetPower> motorsteps){
+            mMotorsteps = motorsteps;
         }
 
         @Override
@@ -62,6 +69,13 @@ public class SkystoneAutoBlue1 extends OpMode {
                 bDone = true;
             mPrevDist = dist;
 
+            // optionally stop the motors when we're done
+            if (bDone && mStop) {
+                for (AutoLib.SetPower m : mMotorsteps) {
+                    m.setPower(0);
+                }
+            }
+
             return bDone;
         }
     }
@@ -77,11 +91,11 @@ public class SkystoneAutoBlue1 extends OpMode {
         float mMinPower = 0.25f;
         float mSgnPower;
 
-        public SqGyroPosIntGuideStep(SensorLib.EncoderGyroPosInt posInt, Position target, float heading,
+        public SqGyroPosIntGuideStep(OpMode opmode, SensorLib.EncoderGyroPosInt posInt, Position target, float heading,
                                      SensorLib.PID pid, ArrayList<AutoLib.SetPower> motorsteps, float power, double tol) {
             // this.preAdd(new SquirrelyGyroGuideStep(mode, direction, heading, gyro, pid, steps, power));
-            super(0, heading, posInt.getGyro(), pid, motorsteps, power);
-            mOpMode = AutoLib.mOpMode;
+            super(opmode, 0, heading, posInt.getGyro(), pid, motorsteps, power);
+            mOpMode = opmode;
             mTarget = target;
             mPosInt = posInt;
             mTol = tol;
@@ -132,11 +146,11 @@ public class SkystoneAutoBlue1 extends OpMode {
         AutoLib.GyroGuideStep mGuideStep;
         PositionTerminatorStep mTerminatorStep;
 
-        public SqPosIntDriveToStep(SensorLib.EncoderGyroPosInt posInt, DcMotor[] motors,
+        public SqPosIntDriveToStep(OpMode opmode, SensorLib.EncoderGyroPosInt posInt, DcMotor[] motors,
                                  float power, SensorLib.PID pid, Position target, float heading, double tolerance, boolean stop)
         {
-            super(new SqGyroPosIntGuideStep(posInt, target, heading, pid, null, power, tolerance),
-                    new PositionTerminatorStep(posInt, target, tolerance),
+            super(new SqGyroPosIntGuideStep(opmode, posInt, target, heading, pid, null, power, tolerance),
+                    new PositionTerminatorStep(posInt, target, tolerance, stop),
                     motors);
 
             mPosInt = posInt;
@@ -145,15 +159,87 @@ public class SkystoneAutoBlue1 extends OpMode {
 
     }
 
+    // Step: use Vuforia to locate the Skystone image and set the given position to where it is so we can go there
+    class FindSkystoneStep extends AutoLib.LogTimeStep {
 
+        Position mCurrPos;      // current position -- stone is relative to this
+        Position mTarget;       // target position we'll update if we see Skystone
+
+        public FindSkystoneStep(OpMode opmode, Position currPos, Position target, float timeout)
+        {
+            super(opmode, "FindSkystoneStep", timeout);
+            mCurrPos = currPos;
+            mTarget = target;
+        }
+
+        public boolean loop() {
+
+            super.loop();
+            if (firstLoopCall()) {
+                mTarget.x = mCurrPos.x - 8;  // pretend we found the Stone nearest the audience
+            }
+
+            // run the base Step and return what it returns for "done" - i.e. have we timed out?
+            // note that we're running this code AFTER trying to determine target with Vuforia data ...
+            return super.loop();
+        }
+    }
+
+
+    // Step: log the given Position variable to the console so we can see if/when it changes due to Vuforia hit ...
+    class LogPosition extends AutoLib.LogTimeStep {
+
+        OpMode mOpMode;
+        Position mPosition;
+        String mName;
+
+        public LogPosition(OpMode opMode, String name, Position position, double seconds) {
+            super(opMode, name, seconds);
+            mOpMode = opMode;
+            mName = name;
+            mPosition = position;
+        }
+
+        public boolean loop()
+        {
+            mOpMode.telemetry.addData(mName, mPosition);
+            return super.loop();
+        }
+    }
+
+    class ComputePositionStep extends AutoLib.Step {
+
+        Position mA, mB, mC;
+
+        public ComputePositionStep(Position a, Position b, Position c)
+        {
+           mA = a;  mB = b;  mC = c;
+        }
+
+        public boolean loop()
+        {
+            super.loop();
+            if (firstLoopCall()) {
+                mC.x = mA.x + mB.x;
+                mC.y = mA.y + mB.y;
+                mC.z = mA.z + mB.z;
+            }
+            return true;
+        }
+
+    }
 
     AutoLib.Sequence mSequence;             // the root of the sequence tree
     boolean bDone;                          // true when the programmed sequence is done
     boolean bSetup;                         // true when we're in "setup mode" where joysticks tweak parameters
     SensorLib.PID mPid;                     // PID controller for the sequence
     SensorLib.EncoderGyroPosInt mPosInt;    // Encoder/gyro-based position integrator to keep track of where we are
-    SensorLib.PIDAdjuster mPidAdjuster;     // for interactive adjustment of PID parameters
     RobotHardware rh;                       // standard hardware set for these tests
+
+    // some robot dimensions we'll need to e.g. position the front of the bot where we want it relative to
+    // the centroid of the bot, which is where we track its position on the field
+    final float ROBOT_LENGTH = 18.0f;
+    final float MM_TO_INCH = 25.4f;
 
     @Override
     public void init() {
@@ -179,9 +265,6 @@ public class SkystoneAutoBlue1 extends OpMode {
         float KiCutoff = 10.0f;    // maximum angle error for which we update integrator
         mPid = new SensorLib.PID(Kp, Ki, Kd, KiCutoff);    // make the object that implements PID control algorithm
 
-        // create a PID adjuster for interactive tweaking (see loop() below)
-        mPidAdjuster = new SensorLib.PIDAdjuster(this, mPid, gamepad1);
-
         // create Encoder/gyro-based PositionIntegrator to keep track of where we are on the field
         int countsPerRev = 28*40;		// for 40:1 gearbox motor @ 28 counts/motorRev
         double wheelDiam = 4.0;		    // wheel diameter (in)
@@ -194,7 +277,6 @@ public class SkystoneAutoBlue1 extends OpMode {
                         (this.virtualBot.getClass() == MechanumBot.class) ? SensorLib.EncoderGyroPosInt.DriveType.MECANUM :
                                 SensorLib.EncoderGyroPosInt.DriveType.NORMAL;  // handle X-drive too ...
         mPosInt = new SensorLib.EncoderGyroPosInt(dt,this, rh.mIMU, rh.mMotors, countsPerRev, wheelDiam, initialPosn);
-
 
         // create an autonomous sequence with the steps to drive
         // several legs of a polygonal course ---
@@ -211,46 +293,86 @@ public class SkystoneAutoBlue1 extends OpMode {
         final float boff = -90;  // bearing offset of our convention (+Y to rear of field) vs. Vuforia's (+Y to Blue side)
         // coordinates and bearings below are in Vuforia terms to be compatible with Vuforia position updates if we use them.
 
-        // fetch a SkyStone (for now we assume we know where it is) and pull it out of line
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, -44, 32, 0., 0), -90+boff, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, -44, 40, 0., 0), -90+boff, tol, false));
+        // get closer to the Skystones so Vuforia can see the Skystone image better
+        Position lookLoc = new Position(DistanceUnit.INCH, -36, 40+ROBOT_LENGTH/2, 0., 0);
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid, lookLoc, -90+boff, tol, true));
 
-        // go to the Blue Skybridge
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 0, 48, 0., 0), -90+boff, tol, false));
+        // look for the Skystone with the image and update the target Position for the next move to go to it
+        // default to the middle Stone if we don't see one ...
+        Position skyLoc = new Position(DistanceUnit.INCH, -36, 24+ROBOT_LENGTH/2, 0., 0);
+        AutoLib.ConcurrentSequence cs1 = new AutoLib.ConcurrentSequence();
+        mSequence.add(cs1);
 
-        // go to the Blue Foundation and pull it into the Blue Building Area
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 48, 32, 0., 0), -90+boff, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 48, 62, 0., 0), -90+boff, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 0, 62, 0., 0), -90+boff, tol, false));
+        cs1.add(new FindSkystoneStep(this, lookLoc, skyLoc, 3.0f));         // look for SkyStone ...
+        cs1.add(new LogPosition(this, "skyLoc", skyLoc,3.0f));       // ... and report target position while searching
+
+        // drive to the SkyStone if we found it, otherwise to the default (middle) stone.
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid, skyLoc, -90 + boff, tol, true));
+
+        // grab the Skystone
+        // mSequence.add(new AutoLib.ServoStep());
+        mSequence.add(new AutoLib.LogTimeStep(this, "grab Stone", 2));
+
+        // back up a bit to pull the stone out of the line of stones
+        Position pullLoc = new Position(DistanceUnit.INCH, 0, 0, 0., 0);
+        mSequence.add(new ComputePositionStep(skyLoc, new Position(DistanceUnit.INCH, 0, 12, 0, 0), pullLoc));
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid, pullLoc, -90 + boff, tol, false));
+
+        // go to the Blue Foundation
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, 48, 32, 0., 0), -90+boff, tol, true));
+
+        // do the next two Steps in parallel
+        AutoLib.ConcurrentSequence cs2 = new AutoLib.ConcurrentSequence();
+        mSequence.add(cs2);
+
+        // drop the Skystone
+        // cs2.add(new AutoLib.ServoStep());
+        cs2.add(new AutoLib.LogTimeStep(this, "drop Stone", 2));
+
+        // grab the Foundation
+        // cs2.add(new AutoLib.ServoStep());
+        cs2.add(new AutoLib.LogTimeStep(this, "grab Foundation", 2));
+
+        // drag the Foundation to the Building Area
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, 48, 62, 0., 0), -90+boff, tol, true));
+
+        // release the Foundation
+        // mSequence.add(new AutoLib.ServoStep());
+        mSequence.add(new AutoLib.LogTimeStep(this, "release Foundation", 2));
 
         // slide out of the corridor left by positioning the Foundation
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 0, 48, 0., 0), -90+boff, tol, true));
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, 0, 62, 0., 0), -90+boff, tol, false));
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, 0, 48, 0., 0), -90+boff, tol, false));
 
         // return to the quarry for a second SkyStone
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, -60, 32, 0., 0), -90+boff, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, -60, 32, 0., 0), -90+boff, tol, true));
+
+        // grab the Skystone
+        // mSequence.add(new AutoLib.ServoStep());
+        mSequence.add(new AutoLib.LogTimeStep(this, "grab Stone", 2));
+
+        // back up a bit to pull the stone out of the line of stones
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, -60, 40, 0., 0), -90+boff, tol, false));
 
         // bring it to the audience end of the Foundation via the Blue Skybridge
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
                 new Position(DistanceUnit.INCH, 0, 48, 0., 0), -90+boff, tol, false));
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 24, 60, 0., 0), 0+boff, tol, false));
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, 24, 60, 0., 0), 0+boff, tol, true));
+
+        // drop the Skystone
+        // cs2.add(new AutoLib.ServoStep());
+        mSequence.add(new AutoLib.LogTimeStep(this, "drop Stone", 2));
 
         // park under the SkyBridge
-        mSequence.add(new SqPosIntDriveToStep(mPosInt, rh.mMotors, movePower, mPid,
-                new Position(DistanceUnit.INCH, 0, 48, 0., 0), 0+boff, tol, false));
-
-        // stop all motors
-        mSequence.add(new AutoLib.MoveByTimeStep(rh.mMotors, 0, 0, true));
+        mSequence.add(new SqPosIntDriveToStep(this, mPosInt, rh.mMotors, movePower, mPid,
+                new Position(DistanceUnit.INCH, 0, 48, 0., 0), 0+boff, tol, true));
 
         // start out not-done
         bDone = false;
@@ -259,15 +381,6 @@ public class SkystoneAutoBlue1 extends OpMode {
     public void loop() {
         // report elapsed time to test Suspend/Resume
         telemetry.addData("elapsed time", this.getRuntime());
-
-        if (gamepad1.y)
-            bSetup = true;      // Y button: enter "setup mode" using controller inputs to set Kp and Ki
-        if (gamepad1.x)
-            bSetup = false;     // X button: exit "setup mode"
-        if (bSetup) {           // "setup mode"
-            mPidAdjuster.loop();
-            return;
-        }
 
         // until we're done, keep looping through the current Step(s)
         if (!bDone)

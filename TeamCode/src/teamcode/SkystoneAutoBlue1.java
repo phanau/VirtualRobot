@@ -204,6 +204,8 @@ public class SkystoneAutoBlue1 extends OpMode {
         }
     }
 
+    // a simple Step that computes a new Position (c) by adding an offset (b) to Position a.
+    // this happens during sequence run-time in loop(), not when the sequence is constructed in init().
     class ComputePositionStep extends AutoLib.Step {
 
         Position mA, mB, mC;

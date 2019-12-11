@@ -82,7 +82,7 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 		telemetry.addData("initial heading", initialHeading);
 
 		// construct a PID controller for correcting heading errors
-		final float Kp = 0.01f;        // degree heading proportional term correction per degree of deviation
+		final float Kp = 0.1f;        // degree heading proportional term correction per degree of deviation
 		final float Ki = 0.01f;        // ... integrator term
 		final float Kd = 0.0f;         // ... derivative term
 		final float KiCutoff = 3.0f;   // maximum angle error for which we update integrator
@@ -108,6 +108,8 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 	@Override
 	public void loop() {
 
+		final double deadband = 0.05;		// to avoid zero-stick drifting
+
 		// process gyro correction inputs on lb and rb buttons
 		lb.process(gamepad1.left_bumper);
 		rb.process(gamepad1.right_bumper);
@@ -119,17 +121,25 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 
 		// power is the magnitude of the direction vector
 		double power = Math.sqrt(dx*dx + dy*dy);
+		if (Math.abs(power) < deadband)
+			power = 0;
+
+		// scale the joystick values to make it easier to control the robot more precisely at slower speeds.
+		power = scaleInput(power);
+
+		// set the current power on the step that actually controls the robot
 		mStep.setPower((float) power);
 
 		// make sure we can rotate even if we're not moving
 		mStep.setMaxPower((float) 1.0);
 
 		// we don't have a valid direction when inputs are "zero"
-		final double MIN_INPUT = 0.1;
-		if (power > MIN_INPUT) {
+		if (power > 0) {
 			// direction angle of stick >> the direction we want to move
 			double direction = Math.atan2(-dx, dy);    // stick angle: zero = +y, positive CCW, range +-pi
 			direction *= 180.0 / Math.PI;        // radians to degrees
+
+			// set the direction of motion on the step that actually controls the robot
 			mStep.setDirection((float) direction);
 		}
 
@@ -140,7 +150,7 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 		double heading = 0;
 		boolean setHeading = false;
 		double hMag = Math.sqrt(hx*hx + hy*hy);
-		if (hMag > MIN_INPUT) {
+		if (hMag > deadband) {
 			// direction angle of stick >> the direction we want to face
 			heading = Math.atan2(-hx, hy);    // stick angle: zero = +y, positive CCW, range +-pi
 			heading *= 180.0 / Math.PI;        // radians to degrees
@@ -157,6 +167,7 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 		if (gamepad1.dpad_down && gamepad1.dpad_left) { heading = 135; setHeading = true; }
 		if (gamepad1.dpad_up && gamepad1.dpad_left) { heading = 45; setHeading = true; }
 
+		// set the direction that robot should face on the step that actually controls the robot
 		if (setHeading)
 			mStep.setHeading((float) heading);
 
@@ -173,4 +184,12 @@ public class AbsoluteSquirrelyGyroDrive1 extends OpMode {
 	public void stop() {
 	}
 
+	/*
+	 * This method scales the joystick input so for low joystick values, the
+	 * scaled value is less than linear.  This is to make it easier to drive
+	 * the robot more precisely at slower speeds.
+	 */
+	double scaleInput(double dVal)  {
+		return dVal*dVal*dVal;		// maps {-1,1} -> {-1,1}
+	}
 }

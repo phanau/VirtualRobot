@@ -1712,7 +1712,10 @@ public class AutoLib {
         // compute front and back wheel relative speeds needed to go in desired direction
         double front = 0.0f;
         double back = 0.0f;
+/*
+        // piecewise linear approximation of cosine that maximizes one motor at all angles
         if (heading < 0) {
+
             if (heading > -90) {
                 front = 1.0;
                 back = lerp(heading, 0, -90, 1, -1);
@@ -1731,6 +1734,16 @@ public class AutoLib {
                 back = lerp(heading, 90, 180, 1, -1);
             }
         }
+ */
+        // true cosine implementation - in theory, yields same velocity at all angles.
+        // so straight ahead only goes 0.707x as fast as it could
+        front = Math.cos(Math.toRadians(heading+45));
+        back = Math.cos(Math.toRadians(heading-45));
+
+        // normalize to make one motor full value at all angles
+        double maxmagn = Math.max(Math.abs(front), Math.abs(back));
+        front /= maxmagn;
+        back  /= maxmagn;
 
         // return results
         return new MotorPowers(front, back);

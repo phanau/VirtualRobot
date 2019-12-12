@@ -1171,7 +1171,8 @@ public class AutoLib {
 
             // log some data
             if (mOpMode != null) {
-                mOpMode.telemetry.addData("heading ", heading);
+                mOpMode.telemetry.addData("gyro heading ", heading);
+                mOpMode.telemetry.addData("commanded heading ", mHeading);
                 mOpMode.telemetry.addData("abs direction ", mDirection);
                 mOpMode.telemetry.addData("rel direction ", relDir);
                 mOpMode.telemetry.addData("power FR ", pFR);
